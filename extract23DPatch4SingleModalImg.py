@@ -1,6 +1,6 @@
 '''
 Target: Crop patches for kinds of medical images, such as hdr, nii, mha, mhd, raw and so on, and store them as hdf5 files
-for single-scale patches
+for single input modality
 Created in June, 2016
 Author: Dong Nie
 '''
@@ -18,11 +18,14 @@ parser.add_argument("--how2normalize", type=int, default=6, help="how to normali
 global opt
 opt = parser.parse_args()
 
+# input patch size
 d1 = 5
 d2 = 64
 d3 = 64
+# output patch size
 dFA = [d1, d2, d3]  # size of patches of input data
 dSeg = [1, 64, 64]  # size of pathes of label data
+# stride for extracting patches along the volume
 step1 = 1
 step2 = 16 
 step3 = 16
@@ -201,8 +204,8 @@ def extractPatch4OneSubject(matFA, matSeg, matMask, fileID, d, step, rate):
 def main():
     print opt
     path = '/home/niedong/Data4LowDosePET/data_niigz_scale/'
-    path = '/shenlab/lab_stor5/dongnie/brain_mr2ct/original_data/'
-    scan = ScanFile(path, postfix='_mr.hdr')
+    path = '/shenlab/lab_stor5/dongnie/brain_mr2ct/original_data/' # path to the data, change to your own path
+    scan = ScanFile(path, postfix='_mr.hdr') # the specify item for your files, change to your own style
     filenames = scan.scan_files()
 
     # for input

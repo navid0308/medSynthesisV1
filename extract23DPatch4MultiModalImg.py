@@ -34,14 +34,13 @@ step=[step1,step2,step3]
     
 
 class ScanFile(object):   
-    def __init__(self,directory,prefix=None,postfix=None):  
+    def __init__(self,directory,prefix=None,postfix=None):    
         self.directory=directory  
         self.prefix=prefix  
         self.postfix=postfix  
           
     def scan_files(self):    
         files_list=[]    
-            
         for dirpath,dirnames,filenames in os.walk(self.directory):   
             ''''' 
             dirpath is a string, the path to the directory.   
@@ -83,20 +82,20 @@ def extractPatch4OneSubject(matFA, matMR, matSeg, matMask, fileID ,d, step, rate
     trainSeg=np.zeros([estNum,1,dSeg[0],dSeg[1],dSeg[2]],dtype=np.float16)
     trainMR=np.zeros([estNum,1,dFA[0],dFA[1],dFA[2]],dtype=np.float16)
 
-    print 'trainFA shape, ',trainFA.shape
+    #print 'trainFA shape, ',trainFA.shape
     #to padding for input
-    margin1=(dFA[0]-dSeg[0])/2
-    margin2=(dFA[1]-dSeg[1])/2
-    margin3=(dFA[2]-dSeg[2])/2
+    margin1=(dFA[0]-dSeg[0])//2
+    margin2=(dFA[1]-dSeg[1])//2
+    margin3=(dFA[2]-dSeg[2])//2
     cubicCnt=0
     marginD=[margin1,margin2,margin3]
-    print 'matFA shape is ',matFA.shape
+    #print 'matFA shape is ',matFA.shape
     matFAOut=np.zeros([row+2*marginD[0],col+2*marginD[1],leng+2*marginD[2]],dtype=np.float16)
-    print 'matFAOut shape is ',matFAOut.shape
+    #print 'matFAOut shape is ',matFAOut.shape
     matFAOut[marginD[0]:row+marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]]=matFA
     
     matMROut=np.zeros([row+2*marginD[0],col+2*marginD[1],leng+2*marginD[2]],dtype=np.float16)
-    print 'matMROut shape is ',matMROut.shape
+    #print 'matMROut shape is ',matMROut.shape
     matMROut[marginD[0]:row+marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]]=matMR
     
     matSegOut=np.zeros([row+2*marginD[0],col+2*marginD[1],leng+2*marginD[2]],dtype=np.float16)
@@ -185,11 +184,12 @@ def extractPatch4OneSubject(matFA, matMR, matSeg, matMask, fileID ,d, step, rate
     return cubicCnt
         
 def main():
-    print opt
-    path = '/home/niedong/Data4LowDosePET/data_niigz_scale/'
-    scan = ScanFile(path, postfix = '60s_suv.nii.gz')  
+    #print opt
+    path = 'old/'
+    scan = ScanFile(directory = path, postfix = '.nii.gz')  
     filenames = scan.scan_files()  
-   
+    print(filenames)
+
     maxLPET = 149.366742
     maxPercentLPET = 7.76
     minLPET = 0.00055037
@@ -212,7 +212,7 @@ def main():
     
     for filename in filenames:
          
-        print 'low dose filename: ', filename
+        #print 'low dose filename: ', filename
         
         lpet_fn = filename
         ct_fn = filename.replace('60s_suv','rsCT')  
@@ -231,22 +231,22 @@ def main():
 
         if opt.how2normalize == 1:
             maxV, minV = np.percentile(mrnp, [99, 1])
-            print 'maxV,', maxV, ' minV, ', minV
+            #print 'maxV,', maxV, ' minV, ', minV
             mrnp = (mrnp - mu) / (maxV - minV)
-            print 'unique value: ', np.unique(ctnp)
+            #print 'unique value: ', np.unique(ctnp)
 
         # for training data in pelvicSeg
         if opt.how2normalize == 2:
             maxV, minV = np.percentile(mrnp, [99, 1])
-            print 'maxV,', maxV, ' minV, ', minV
+            #print 'maxV,', maxV, ' minV, ', minV
             mrnp = (mrnp - mu) / (maxV - minV)
-            print 'unique value: ', np.unique(ctnp)
+            #print 'unique value: ', np.unique(ctnp)
 
         # for training data in pelvicSegRegH5
         if opt.how2normalize == 3:
             std = np.std(mrnp)
             mrnp = (mrnp - mu) / std
-            print 'maxV,', np.ndarray.max(mrnp), ' minV, ', np.ndarray.min(mrnp)
+            #print 'maxV,', np.ndarray.max(mrnp), ' minV, ', np.ndarray.min(mrnp)
 
         if opt.how2normalize == 4:
             maxLPET = 149.366742
@@ -282,7 +282,7 @@ def main():
             meanCT = -601.1929
             stdCT = 475.034
 
-            print 'ct, max: ', np.amax(ctnp), ' ct, min: ', np.amin(ctnp)
+            #print 'ct, max: ', np.amax(ctnp), ' ct, min: ', np.amin(ctnp)
 
             # matLPET = (mrnp - meanLPET) / (stdLPET)
             matLPET = mrnp
@@ -292,77 +292,77 @@ def main():
         if opt.how2normalize == 6:
             maxPercentPET, minPercentPET = np.percentile(mrnp, [99.5, 0])
             maxPercentCT, minPercentCT = np.percentile(ctnp, [99.5, 0])
-            print 'maxPercentPET: ',maxPercentPET, ' minPercentPET: ',minPercentPET, ' maxPercentCT: ',maxPercentCT, 'minPercentCT: ', minPercentCT
+            #print 'maxPercentPET: ',maxPercentPET, ' minPercentPET: ',minPercentPET, ' maxPercentCT: ',maxPercentCT, 'minPercentCT: ', minPercentCT
 
             matLPET = (mrnp - minPercentPET)/(maxPercentPET - minPercentPET)
             matSPET = (hpetnp - minPercentPET) / (maxPercentPET - minPercentPET)
 
             matCT = (ctnp - minPercentCT) / (maxPercentCT - minPercentCT)
 
-            print 'maxLPET: ',np.amax(matLPET), ' maxSPET: ', np.amax(matSPET), ' maxCT: ', np.amax(matCT)
-            print 'minLPET: ', np.amin(matLPET), ' minSPET: ', np.amin(matSPET), ' minCT: ', np.amin(matCT)
+            #print 'maxLPET: ',np.amax(matLPET), ' maxSPET: ', np.amax(matSPET), ' maxCT: ', np.amax(matCT)
+            #print 'minLPET: ', np.amin(matLPET), ' minSPET: ', np.amin(matSPET), ' minCT: ', np.amin(matCT)
 
         # maxV, minV = np.percentile(mrimg, [99.5, 0])
-#         print 'maxV is: ',np.ndarray.max(mrimg)
+#         #print 'maxV is: ',np.ndarray.max(mrimg)
 #         mrimg[np.where(mrimg>maxV)] = maxV
-#         print 'maxV is: ',np.ndarray.max(mrimg)
+#         #print 'maxV is: ',np.ndarray.max(mrimg)
 #         mu=np.mean(mrimg) # we should have a fixed std and mean
 #         std = np.std(mrimg) 
 #         mrnp = (mrimg - mu)/std
-#         print 'maxV,',np.ndarray.max(mrnp),' minV, ',np.ndarray.min(mrnp)
+#         #print 'maxV,',np.ndarray.max(mrnp),' minV, ',np.ndarray.min(mrnp)
 
         #matLPET = (mrimg - meanLPET)/(stdLPET)
-        #print 'lpet: maxV,',np.ndarray.max(matLPET),' minV, ',np.ndarray.min(matLPET), ' meanV: ', np.mean(matLPET), ' stdV: ', np.std(matLPET)
+        ##print 'lpet: maxV,',np.ndarray.max(matLPET),' minV, ',np.ndarray.min(matLPET), ' meanV: ', np.mean(matLPET), ' stdV: ', np.std(matLPET)
 
         # matLPET = (mrnp - minLPET)/(maxPercentLPET-minLPET)
-        # print 'lpet: maxV,',np.ndarray.max(matLPET),' minV, ',np.ndarray.min(matLPET), ' meanV: ', np.mean(matLPET), ' stdV: ', np.std(matLPET)
+        # #print 'lpet: maxV,',np.ndarray.max(matLPET),' minV, ',np.ndarray.min(matLPET), ' meanV: ', np.mean(matLPET), ' stdV: ', np.std(matLPET)
 
 
 
         
 #         maxV1, minV1 = np.percentile(mrimg1, [99.5 ,1])
-#         print 'maxV1 is: ',np.ndarray.max(mrimg1)
+#         #print 'maxV1 is: ',np.ndarray.max(mrimg1)
 #         mrimg1[np.where(mrimg1>maxV1)] = maxV1
-#         print 'maxV1 is: ',np.ndarray.max(mrimg1)
+#         #print 'maxV1 is: ',np.ndarray.max(mrimg1)
 #         mu1 = np.mean(mrimg1) # we should have a fixed std and mean
 #         std1 = np.std(mrimg1) 
 #         mrnp1 = (mrimg1 - mu1)/std1
-#         print 'maxV1,',np.ndarray.max(mrnp1),' minV, ',np.ndarray.min(mrnp1)
+#         #print 'maxV1,',np.ndarray.max(mrnp1),' minV, ',np.ndarray.min(mrnp1)
 
         # ctnp[np.where(ctnp>maxPercentCT)] = maxPercentCT
         # matCT = (ctnp - meanCT)/stdCT
-        # print 'ct: maxV,',np.ndarray.max(matCT),' minV, ',np.ndarray.min(matCT), 'meanV: ', np.mean(matCT), 'stdV: ', np.std(matCT)
+        # #print 'ct: maxV,',np.ndarray.max(matCT),' minV, ',np.ndarray.min(matCT), 'meanV: ', np.mean(matCT), 'stdV: ', np.std(matCT)
       
 
 
         
 #         maxVal = np.amax(labelimg)
 #         minVal = np.amin(labelimg)
-#         print 'maxV is: ', maxVal, ' minVal is: ', minVal
+#         #print 'maxV is: ', maxVal, ' minVal is: ', minVal
 #         mu=np.mean(labelimg) # we should have a fixed std and mean
 #         std = np.std(labelimg) 
 #         
 #         labelimg = (labelimg - minVal)/(maxVal - minVal)
 # 
-#         print 'maxV,',np.ndarray.max(labelimg),' minV, ',np.ndarray.min(labelimg)
+#         #print 'maxV,',np.ndarray.max(labelimg),' minV, ',np.ndarray.min(labelimg)
         #you can do what you want here for for your label img
         
         # matSPET = (labelimg - minSPET)/(maxPercentSPET-minSPET)
-        # print 'spet: maxV,',np.ndarray.max(matSPET),' minV, ',np.ndarray.min(matSPET), ' meanV: ',np.mean(matSPET), ' stdV: ', np.std(matSPET)
+        # #print 'spet: maxV,',np.ndarray.max(matSPET),' minV, ',np.ndarray.min(matSPET), ' meanV: ',np.mean(matSPET), ' stdV: ', np.std(matSPET)
                 
         sdir = filename.split('/')
-        print 'sdir is, ',sdir, 'and s5 is, ',sdir[5]
-        lpet_fn = sdir[5]
+        #print 'sdir is, ',sdir, 'and s5 is, ',sdir[5]
+        lpet_fn = sdir[len(sdir)-1]
         words = lpet_fn.split('_')
-        print 'words are, ',words
-        ind = int(words[0])
+        #print 'words are, ',words
+        ind = words[0] #int(words[0])
 
     
         fileID = words[0] 
         rate = 1
         cubicCnt = extractPatch4OneSubject(matLPET, matCT, matSPET, maskimg, fileID,dSeg,step,rate)
         #cubicCnt = extractPatch4OneSubject(mrnp, matCT, hpetnp, maskimg, fileID,dSeg,step,rate)
-        print '# of patches is ', cubicCnt
+        #print '# of patches is ', cubicCnt
 
         # reverse along the 1st dimension
         rmrimg = matLPET[matLPET.shape[0] - 1::-1, :, :]
@@ -371,7 +371,8 @@ def main():
         rmaskimg = maskimg[maskimg.shape[0] - 1::-1, :, :]
         fileID = words[0]+'r'
         cubicCnt = extractPatch4OneSubject(rmrimg, rmatCT, rlabelimg, rmaskimg, fileID,dSeg,step,rate)
-        print '# of patches is ', cubicCnt
-    
-if __name__ == '__main__':     
+        #print '# of patches is ', cubicCnt
+
+if __name__ == '__main__':
+    opt.how2normalize = 4     
     main()

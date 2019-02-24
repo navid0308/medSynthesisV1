@@ -16,41 +16,41 @@ import SimpleITK as sitk
 
 # Training settings
 parser = argparse.ArgumentParser(description="PyTorch InfantSeg")
-parser.add_argument("--gpuID", type=int, default=3, help="how to normalize the data")
+parser.add_argument("--gpuID", type=int, default=0, help="how to normalize the data")
 parser.add_argument("--isAdLoss", action="store_true", help="is adversarial loss used?", default=False)
 parser.add_argument("--lambda_AD", default=0.05, type=float, help="Momentum, Default: 0.05")
 parser.add_argument("--how2normalize", type=int, default=5, help="how to normalize the data")
-parser.add_argument("--whichLoss", type=int, default=1, help="which loss to use: 1. LossL1, 2. lossRTL1, 3. MSE (default)")
-parser.add_argument("--whichNet", type=int, default=4, help="which loss to use: 1. UNet, 2. ResUNet, 3. UNet_LRes and 4. ResUNet_LRes (default, 3)")
+parser.add_argument("--whichLoss", type=int, default=3, help="which loss to use: 1. LossL1, 2. lossRTL1, 3. MSE (default)")
+parser.add_argument("--whichNet", type=int, default=3, help="which loss to use: 1. UNet, 2. ResUNet, 3. UNet_LRes and 4. ResUNet_LRes (default, 3)")
 parser.add_argument("--lossBase", type=int, default=1, help="The base to multiply the lossG_G, Default (1)")
-parser.add_argument("--batchSize", type=int, default=10, help="training batch size")
+parser.add_argument("--batchSize", type=int, default=32, help="training batch size")
 parser.add_argument("--isMultiSource", action="store_true", help="is multiple modality used?", default=False)
 parser.add_argument("--numOfChannel_singleSource", type=int, default=5, help="# of channels for a 2D patch for the main modality (Default, 5)")
 parser.add_argument("--numOfChannel_allSource", type=int, default=1, help="# of channels for a 2D patch for all the concatenated modalities (Default, 5)")
-parser.add_argument("--numofIters", type=int, default=200000, help="number of iterations to train for")
-parser.add_argument("--showTrainLossEvery", type=int, default=100, help="number of iterations to show train loss")
-parser.add_argument("--saveModelEvery", type=int, default=5000, help="number of iterations to save the model")
-parser.add_argument("--showValPerformanceEvery", type=int, default=1000, help="number of iterations to show validation performance")
-parser.add_argument("--showTestPerformanceEvery", type=int, default=5000, help="number of iterations to show test performance")
+parser.add_argument("--numofIters", type=int, default=20, help="number of iterations to train for")
+parser.add_argument("--showTrainLossEvery", type=int, default=1, help="number of iterations to show train loss")
+parser.add_argument("--saveModelEvery", type=int, default=5, help="number of iterations to save the model")
+parser.add_argument("--showValPerformanceEvery", type=int, default=1, help="number of iterations to show validation performance")
+parser.add_argument("--showTestPerformanceEvery", type=int, default=1, help="number of iterations to show test performance")
 parser.add_argument("--lr", type=float, default=5e-3, help="Learning Rate. Default=1e-4")
 parser.add_argument("--dropout_rate", default=0.2, type=float, help="prob to drop neurons to zero: 0.2")
-parser.add_argument("--decLREvery", type=int, default=10000, help="Sets the learning rate to the initial LR decayed by momentum every n iterations, Default: n=40000")
+parser.add_argument("--decLREvery", type=int, default=1, help="Sets the learning rate to the initial LR decayed by momentum every n iterations, Default: n=40000")
 parser.add_argument("--cuda", action="store_true", help="Use cuda?", default=True)
-parser.add_argument("--resume", default="/home/niedong/Data4LowDosePET/pytorch_UNet/resunet3d_dp_pet_BatchAug_noNorm_lres_bn_lr5e3_lrdec_base1_lossL1_0p005_0627_5000.pt", type=str, help="Path to checkpoint (default: none)")
+parser.add_argument("--resume", default=None, type=str, help="Path to checkpoint (default: none)")
 parser.add_argument("--start_epoch", default=1, type=int, help="Manual epoch number (useful on restarts)")
 parser.add_argument("--threads", type=int, default=1, help="Number of threads for data loader to use, Default: 1")
 parser.add_argument("--momentum", default=0.9, type=float, help="Momentum, Default: 0.9")
 parser.add_argument("--weight-decay", "--wd", default=1e-4, type=float, help="weight decay, Default: 1e-4")
 parser.add_argument("--RT_th", default=0.005, type=float, help="Relative thresholding: 0.005")
 parser.add_argument("--pretrained", default="", type=str, help="path to pretrained model (default: none)")
-parser.add_argument("--prefixModelName", default="/home/niedong/Data4LowDosePET/pytorch_UNet/resunet3d_dp_pet_BatchAug_noNorm_lres_bn_lr5e3_lrdec_base1_lossL1_0p005_0627_", type=str, help="prefix of the to-be-saved model name")
-parser.add_argument("--prefixPredictedFN", default="preSub1_pet_BatchAug_noNorm_resunet3d_dp_lres_bn_lr5e3_lrdec_base1_lossL1_0p005_0627_", type=str, help="prefix of the to-be-saved predicted filename")
+parser.add_argument("--prefixModelName", default=None, type=str, help="prefix of the to-be-saved model name")
+parser.add_argument("--prefixPredictedFN", default=None, type=str, help="prefix of the to-be-saved predicted filename")
 
 global opt, model
 opt = parser.parse_args()
 
 def main():
-    print opt
+    #print opt
 
 #     prefixModelName = 'Regressor_1112_'
 #     prefixPredictedFN = 'preSub1_1112_'
@@ -88,8 +88,6 @@ def main():
     print('size of params is ')
     print(params[0].size())
 
-
-
     optimizer = optim.Adam(net.parameters(),lr=opt.lr)
     criterion_L2 = nn.MSELoss()
     criterion_L1 = nn.L1Loss()
@@ -113,16 +111,15 @@ def main():
 #     inputs=torch.randn(1000,1,32,32)
 #     targets=torch.LongTensor(1000)
 
-    path_test ='/home/niedong/DataCT/data_niigz/'
-    path_patients_h5 = '/home/niedong/DataCT/h5Data3D_noNorm/trainBatch3D_H5'
-    path_patients_h5_test ='/home/niedong/DataCT/h5Data3D_noNorm/val3D_H5'
+    #path_test ='/home/niedong/DataCT/data_niigz/'
+    path_patients_h5 = 'D:/Datasets/train/'
+    path_patients_h5_test ='D:/Datasets/val/'
     # path_patients_h5_test ='/home/niedong/Data4LowDosePET/test2D_H5'
 #     batch_size=10
     #data_generator = Generator_2D_slices(path_patients_h5,opt.batchSize,inputKey='data3T',outputKey='data7T')
     #data_generator_test = Generator_2D_slices(path_patients_h5_test,opt.batchSize,inputKey='data3T',outputKey='data7T')
-
-    data_generator = Generator_3D_patches(path_patients_h5,opt.batchSize, inputKey='dataLPET', outputKey='dataHPET')
-    data_generator_test = Generator_3D_patches(path_patients_h5_test,opt.batchSize, inputKey='dataLPET', outputKey='dataHPET')
+    data_generator = Generator_3D_patches(path_patients_h5,opt.batchSize, inputKey='T1', outputKey='T2')
+    data_generator_test = Generator_3D_patches(path_patients_h5_test,opt.batchSize, inputKey='T1', outputKey='T2')
     if opt.resume:
         if os.path.isfile(opt.resume):
             print("=> loading checkpoint '{}'".format(opt.resume))
@@ -138,14 +135,13 @@ def main():
     running_loss = 0.0
     start = time.time()
     for iter in range(opt.start_epoch, opt.numofIters+1):
-        #print('iter %d'%iter)
+        print('iter %d'%iter)
 
-        # inputs, exinputs, labels = data_generator.next()
-        inputs, labels = data_generator.next()
-
+        # inputs, exinputs, labels = data_generator.__next__()
+        inputs, labels = data_generator.__next__()
 #         xx = np.transpose(inputs,(5,64,64))
-#         print 'size of inputs: ', inputs.shape
-        inputs = np.transpose(inputs,(0,4,1,2,3))
+        print('size of inputs: ', inputs.shape)
+        inputs = np.transpose(inputs, (0,4,1,2,3))
         # inputs = np.squeeze(inputs) #16x64x64
         # exinputs = np.squeeze(exinputs) #5x64x64
 #         print 'shape is ....',inputs.shape
@@ -164,7 +160,7 @@ def main():
         #print type(inputs), type(exinputs)
         if opt.isMultiSource:
             # source = torch.cat((inputs, exinputs),dim=1)
-            print 'you have to tune the multi source part'
+            print('you have to tune the multi source part')
         else:
             source = inputs
         #source = inputs
@@ -204,9 +200,9 @@ def main():
             batch_size = inputs.size(0)
             real_label = torch.ones(batch_size,1)
             real_label = real_label.cuda()
-            #print(real_label.size())
+            print(real_label.size())
             real_label = Variable(real_label)
-            #print(outputD_real.size())
+            print(outputD_real.size())
             loss_real = criterion_bce(outputD_real,real_label)
             loss_real.backward()
             #train with fake data
@@ -266,10 +262,9 @@ def main():
 
         optimizer.step() #update network parameters
 
-        #print('loss for generator is %f'%lossG.data[0])
+        print('loss for generator is %f'%lossG.data[0])
         #print statistics
         running_loss = running_loss + lossG_G.data[0]
-
 
         if iter%opt.showTrainLossEvery==0: #print every 2000 mini-batches
             print '************************************************'
@@ -302,8 +297,8 @@ def main():
 
         if iter%opt.showValPerformanceEvery==0: #test one subject
             # to test on the validation dataset in the format of h5
-            # inputs,exinputs,labels = data_generator_test.next()
-            inputs, labels = data_generator_test.next()
+            # inputs,exinputs,labels = data_generator_test.__next__()
+            inputs, labels = data_generator_test.__next__()
 
             inputs = np.transpose(inputs,(0,4,1,2,3))
             # inputs = np.squeeze(inputs)
@@ -323,7 +318,7 @@ def main():
             residual_source = inputs
             if opt.isMultiSource:
                 # source = torch.cat((inputs, exinputs), dim=1)
-                print 'you have to tune the multi source part'
+                print('you have to tune the multi source part')
             else:
                 source = inputs
             source = source.cuda()

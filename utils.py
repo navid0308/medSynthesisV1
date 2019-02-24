@@ -13,14 +13,14 @@ import argparse
 import copy
 
 #Dong add keys here
-def Generator_2D_slices(path_patients,batchsize,inputKey='dataMR',outputKey='dataCT'):
+def Generator_2D_slices(path_patients,batchsize,inputKey='T1',outputKey='T2'):
     #path_patients='/home/dongnie/warehouse/CT_patients/test_set/'
-    print path_patients
+    print(path_patients)
     patients = os.listdir(path_patients)#every file  is a hdf5 patient
     while True:
         
         for idx,namepatient in enumerate(patients):
-            print namepatient            
+            print(namepatient)            
             f=h5py.File(os.path.join(path_patients,namepatient),'r')
             #dataMRptr=f['dataMR']
             dataMRptr=f[inputKey]
@@ -33,8 +33,8 @@ def Generator_2D_slices(path_patients,batchsize,inputKey='dataMR',outputKey='dat
             dataMR=np.squeeze(dataMR)
             dataCT=np.squeeze(dataCT)
 
-            #print 'mr shape h5 ',dataMR.shape#B,H,W,C
-            #print 'ct shape h5 ',dataCT.shape#B,H,W
+            #print('mr shape h5 ',dataMR.shape#B,H,W,C
+            #print('ct shape h5 ',dataCT.shape#B,H,W
             
             shapedata=dataMR.shape
             #Shuffle data
@@ -70,8 +70,8 @@ def Generator_2D_slices(path_patients,batchsize,inputKey='dataMR',outputKey='dat
             X=X[inds,...]
             y=y[inds,...]
             
-            print 'y shape ', y.shape                   
-            for i_batch in xrange(int(X.shape[0]/batchsize)):
+            print('y shape ', y.shape)                   
+            for i_batch in range(int(X.shape[0]/batchsize)):
                 yield (X[i_batch*batchsize:(i_batch+1)*batchsize,...],  y[i_batch*batchsize:(i_batch+1)*batchsize,...])
 
 
@@ -79,12 +79,12 @@ def Generator_2D_slices(path_patients,batchsize,inputKey='dataMR',outputKey='dat
 # We extract items from one whole Epoch: traverse the data thoroughly
 def Generator_2D_slices_OneEpoch(path_patients, batchsize, inputKey='dataMR', outputKey='dataCT'):
     # path_patients='/home/dongnie/warehouse/CT_patients/test_set/'
-    print path_patients
+    print(path_patients)
     patients = os.listdir(path_patients)  # every file  is a hdf5 patient
     # while True:
     #
     for idx, namepatient in enumerate(patients):
-        print namepatient
+        print(namepatient)
         f = h5py.File(os.path.join(path_patients, namepatient), 'r')
         # dataMRptr=f['dataMR']
         dataMRptr = f[inputKey]
@@ -97,8 +97,8 @@ def Generator_2D_slices_OneEpoch(path_patients, batchsize, inputKey='dataMR', ou
         dataMR = np.squeeze(dataMR)
         dataCT = np.squeeze(dataCT)
 
-        # print 'mr shape h5 ',dataMR.shape#B,H,W,C
-        # print 'ct shape h5 ',dataCT.shape#B,H,W
+        # print('mr shape h5 ',dataMR.shape#B,H,W,C
+        # print('ct shape h5 ',dataCT.shape#B,H,W
 
         shapedata = dataMR.shape
         # Shuffle data
@@ -134,8 +134,8 @@ def Generator_2D_slices_OneEpoch(path_patients, batchsize, inputKey='dataMR', ou
         X = X[inds, ...]
         y = y[inds, ...]
 
-        print 'y shape ', y.shape
-        for i_batch in xrange(int(X.shape[0] / batchsize)):
+        print('y shape ', y.shape)
+        for i_batch in range(int(X.shape[0] / batchsize)):
             yield (X[i_batch * batchsize:(i_batch + 1) * batchsize, ...],
                    y[i_batch * batchsize:(i_batch + 1) * batchsize, ...])
 
@@ -144,12 +144,12 @@ def Generator_2D_slices_OneEpoch(path_patients, batchsize, inputKey='dataMR', ou
 #Dong add keys here
 def Generator_2D_slicesV1(path_patients,batchsize,inputKey='dataMR',segKey='dataCT', contourKey='dataContour'):
     #path_patients='/home/dongnie/warehouse/CT_patients/test_set/'
-    print path_patients
+    print(path_patients)
     patients = os.listdir(path_patients)#every file  is a hdf5 patient
     while True:
         
         for idx,namepatient in enumerate(patients):
-            print namepatient            
+            print(namepatient)            
             f=h5py.File(os.path.join(path_patients,namepatient),'r')
             #dataMRptr=f['dataMR']
             dataMRptr=f[inputKey]
@@ -166,8 +166,8 @@ def Generator_2D_slicesV1(path_patients,batchsize,inputKey='dataMR',segKey='data
             dataCT=np.squeeze(dataCT)
             dataContour=np.squeeze(dataContour)
 
-            #print 'mr shape h5 ',dataMR.shape#B,H,W,C
-            print 'ct shape h5 ',dataCT.shape#B,H,W
+            #print('mr shape h5 ',dataMR.shape#B,H,W,C
+            print('ct shape h5 ',dataCT.shape)#B,H,W
             
             shapedata=dataMR.shape
             #Shuffle data
@@ -210,10 +210,10 @@ def Generator_2D_slicesV1(path_patients,batchsize,inputKey='dataMR',segKey='data
             y=y[inds,...]
             y1=y1[inds,...]
             
-            print 'y shape ', y.shape                   
-            print 'X shape ', X.shape                   
-            print 'y1 shape ', y1.shape                   
-            for i_batch in xrange(int(X.shape[0]/batchsize)):
+            print('y shape ', y.shape)                   
+            print('X shape ', X.shape)                   
+            print('y1 shape ', y1.shape)                   
+            for i_batch in range(int(X.shape[0]/batchsize)):
                 yield (X[i_batch*batchsize:(i_batch+1)*batchsize,...],  y[i_batch*batchsize:(i_batch+1)*batchsize,...],y1[i_batch*batchsize:(i_batch+1)*batchsize,...])
 
 
@@ -221,12 +221,12 @@ def Generator_2D_slicesV1(path_patients,batchsize,inputKey='dataMR',segKey='data
 # We extract items from one whole Epoch: traverse the data thoroughly
 def Generator_2D_slicesV1_OneEpoch(path_patients, batchsize, inputKey='dataMR', segKey='dataCT', contourKey='dataContour'):
     # path_patients='/home/dongnie/warehouse/CT_patients/test_set/'
-    print path_patients
+    print(path_patients)
     patients = os.listdir(path_patients)  # every file  is a hdf5 patient
     # # while True:
     #
     for idx, namepatient in enumerate(patients):
-        print namepatient
+        print(namepatient)
         f = h5py.File(os.path.join(path_patients, namepatient), 'r')
         # dataMRptr=f['dataMR']
         dataMRptr = f[inputKey]
@@ -243,8 +243,8 @@ def Generator_2D_slicesV1_OneEpoch(path_patients, batchsize, inputKey='dataMR', 
         dataCT = np.squeeze(dataCT)
         dataContour = np.squeeze(dataContour)
 
-        # print 'mr shape h5 ',dataMR.shape#B,H,W,C
-        print 'ct shape h5 ', dataCT.shape  # B,H,W
+        # print('mr shape h5 ',dataMR.shape#B,H,W,C
+        print('ct shape h5 ', dataCT.shape)  # B,H,W
 
         shapedata = dataMR.shape
         # Shuffle data
@@ -287,10 +287,10 @@ def Generator_2D_slicesV1_OneEpoch(path_patients, batchsize, inputKey='dataMR', 
         y = y[inds, ...]
         y1 = y1[inds, ...]
 
-        print 'y shape ', y.shape
-        print 'X shape ', X.shape
-        print 'y1 shape ', y1.shape
-        for i_batch in xrange(int(X.shape[0] / batchsize)):
+        print('y shape ', y.shape)
+        print('X shape ', X.shape)
+        print('y1 shape ', y1.shape)
+        for i_batch in range(int(X.shape[0] / batchsize)):
             yield (X[i_batch * batchsize:(i_batch + 1) * batchsize, ...],
                    y[i_batch * batchsize:(i_batch + 1) * batchsize, ...],
                    y1[i_batch * batchsize:(i_batch + 1) * batchsize, ...])
@@ -307,13 +307,13 @@ Output:
 '''
 def Generator_2D_slices_variousKeys(path_patients,batchsize, *keys):
     #path_patients='/home/dongnie/warehouse/CT_patients/test_set/'
-    print path_patients
+    print(path_patients)
     patients = os.listdir(path_patients)#every file  is a hdf5 patient
     numOfKeys = len(keys)
     while True:
         
         for idx,namepatient in enumerate(patients):
-            print namepatient            
+            print(namepatient)         
             f = h5py.File(os.path.join(path_patients,namepatient))
             
             data0 = f[keys[0]].value
@@ -330,8 +330,8 @@ def Generator_2D_slices_variousKeys(path_patients,batchsize, *keys):
 #                 dataMR=np.squeeze(dataMR)
 #                 dataCT=np.squeeze(dataCT)
     
-                #print 'mr shape h5 ',dataMR.shape#B,H,W,C
-                #print 'ct shape h5 ',dataCT.shape#B,H,W
+                #print('mr shape h5 ',dataMR.shape#B,H,W,C
+                #print('ct shape h5 ',dataCT.shape#B,H,W
                 
                 
                 #Shuffle data
@@ -369,37 +369,38 @@ def Generator_2D_slices_variousKeys(path_patients,batchsize, *keys):
             X=X[inds,...]
 #             y=y[inds,...]
             
-            print 'X shape ', X.shape                   
-            for i_batch in xrange(int(X.shape[0]/batchsize)):
+            print('X shape ', X.shape)                   
+            for i_batch in range(int(X.shape[0]/batchsize)):
 #                 yield (X[i_batch*batchsize:(i_batch+1)*batchsize,...,keyInd],  y[i_batch*batchsize:(i_batch+1)*batchsize,...])
                 yield ([ X[i_batch*batchsize:(i_batch+1)*batchsize,...,keyInd] for keyInd in range(0,numOfKeys)])
 
 
 
 
-def Generator_3D_patches(path_patients,batchsize, inputKey='dataMR',outputKey='dataCT'):
+def Generator_3D_patches(path_patients,batchsize, inputKey='T1',outputKey='T2'):
     #path_patients='/home/dongnie/warehouse/CT_patients/test_set/'
-    print path_patients
+    print(path_patients)
     patients = os.listdir(path_patients)#every file  is a hdf5 patient
     while True:
         
         for idx,namepatient in enumerate(patients):
-            print namepatient            
+            print(namepatient)            
             f=h5py.File(os.path.join(path_patients,namepatient))
             dataMRptr=f[inputKey]
             dataMR=dataMRptr.value
-            #dataMR=np.squeeze(dataMR)
-            
+
             dataCTptr=f[outputKey]
             dataCT=dataCTptr.value
             #dataCT=np.squeeze(dataCT)
 
-            dataMR=np.squeeze(dataMR)
-            dataCT=np.squeeze(dataCT)
-            print 'mr shape h5 ',dataMR.shape
+            dataMR = dataMR.reshape(dataMR.shape[0], dataMR.shape[2], dataMR.shape[3], dataMR.shape[4])
+            dataCT = dataCT.reshape(dataCT.shape[0], dataCT.shape[2], dataCT.shape[3], dataCT.shape[4])
+            #dataMR=np.squeeze(dataMR)
+            #dataCT=np.squeeze(dataCT)
 
-            
+            print('mr shape h5 ',dataMR.shape)
             shapedata=dataMR.shape
+
             #Shuffle data
             idx_rnd=np.random.choice(shapedata[0], shapedata[0], replace=False)
             dataMR=dataMR[idx_rnd,...]
@@ -411,8 +412,8 @@ def Generator_3D_patches(path_patients,batchsize, inputKey='dataMR',outputKey='d
                 inds_toadd=np.random.randint(0, dataMR.shape[0], to_add)
                 X=np.zeros((dataMR.shape[0]+to_add, dataMR.shape[1], dataMR.shape[2], dataMR.shape[3]))#dataMR
                 X[:dataMR.shape[0],...]=dataMR
-                X[dataMR.shape[0]:,...]=dataMR[inds_toadd]                
-                
+                X[dataMR.shape[0]:,...]=dataMR[inds_toadd]
+
                 y=np.zeros((dataCT.shape[0]+to_add, dataCT.shape[1], dataCT.shape[2], dataCT.shape[3]))#dataCT
                 y[:dataCT.shape[0],...]=dataCT
                 y[dataCT.shape[0]:,...]=dataCT[inds_toadd]
@@ -426,10 +427,10 @@ def Generator_3D_patches(path_patients,batchsize, inputKey='dataMR',outputKey='d
             y=np.expand_dims(y, axis=4)
             y=y.astype(np.float32)
             
-            print 'y shape ', y.shape
-            print 'X shape ', X.shape
+            print('y shape ', y.shape)
+            print('X shape ', X.shape)
                              
-            for i_batch in xrange(int(X.shape[0]/batchsize)):
+            for i_batch in range(int(X.shape[0]/batchsize)):
                 yield (X[i_batch*batchsize:(i_batch+1)*batchsize,...],  y[i_batch*batchsize:(i_batch+1)*batchsize,...])
                 
 '''
@@ -437,14 +438,14 @@ def Generator_3D_patches(path_patients,batchsize, inputKey='dataMR',outputKey='d
     I think this can only goes into the 1st space, instead of recursive initialization
  '''
 def weights_init(m):
-    xavier=torch.nn.init.xavier_uniform
+    xavier=torch.nn.init.xavier_uniform_
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
 #         m.weight.data.normal_(0.0, 0.02)
-        #print m.weight.data
-        #print m.bias.data
+        #print(m.weight.data
+        #print(m.bias.data
         xavier(m.weight.data)
-#         print 'come xavier'
+#         print('come xavier'
         #xavier(m.bias.data)
     elif classname.find('BatchNorm') != -1:
         m.weight.data.normal_(1.0, 0.02)
@@ -484,13 +485,13 @@ output:
     psnr
 '''
 def psnr(ct_generated,ct_GT):
-    print ct_generated.shape
-    print ct_GT.shape
+    print(ct_generated.shape)
+    print(ct_GT.shape)
 
     mse=np.sqrt(np.mean((ct_generated-ct_GT)**2))
-    print 'mse ',mse
+    print('mse ',mse)
     max_I=np.max([np.max(ct_generated),np.max(ct_GT)])
-    print 'max_I ',max_I
+    print('max_I ',max_I)
     return 20.0*np.log10(max_I/mse)
 
 '''
@@ -525,10 +526,10 @@ def evaluate(patch_MR, netG, modelPath):
 #         netG.load_state_dict(torch.load(modelPath))
         netG.cuda()
         netG.eval()
-#         print type(patch_MR)
+#         print(type(patch_MR)
         res = netG(patch_MR)
         
-#         print res.size(),res.squeeze(0).size()
+#         print(res.size(),res.squeeze(0).size()
         if isinstance(res, tuple):
             res = res[0]
         _, tmp = res.squeeze(0).max(0)
@@ -536,10 +537,10 @@ def evaluate(patch_MR, netG, modelPath):
 
         #imsave('mr32.png',np.squeeze(MR16_eval[0,:,:,2]))
         #imsave('ctpred.png',np.squeeze(patch_CT_pred[0,:,:,0]))
-        #print 'mean of layer  ',np.mean(MR16_eval)
-        #print 'min ct estimated ',np.min(patch_CT_pred)
-        #print 'max ct estimated ',np.max(patch_CT_pred)
-        #print 'mean of ctpatch estimated ',np.mean(patch_CT_pred)
+        #print('mean of layer  ',np.mean(MR16_eval)
+        #print('min ct estimated ',np.min(patch_CT_pred)
+        #print('max ct estimated ',np.max(patch_CT_pred)
+        #print('mean of ctpatch estimated ',np.mean(patch_CT_pred)
         return patchOut
 
 '''
@@ -559,10 +560,10 @@ def evaluate_reg(patch_MR, netG, modelPath):
     #         netG.load_state_dict(torch.load(modelPath))
     netG.cuda()
     netG.eval()
-    #         print type(patch_MR)
+    #         print(type(patch_MR)
     res = netG(patch_MR)
 
-    #         print res.size(),res.squeeze(0).size()
+    #         print(res.size(),res.squeeze(0).size()
     if isinstance(res, tuple):
         res = res[0]
     # _, tmp = res.squeeze(0).max(0)
@@ -571,10 +572,10 @@ def evaluate_reg(patch_MR, netG, modelPath):
 
     # imsave('mr32.png',np.squeeze(MR16_eval[0,:,:,2]))
     # imsave('ctpred.png',np.squeeze(patch_CT_pred[0,:,:,0]))
-    # print 'mean of layer  ',np.mean(MR16_eval)
-    # print 'min ct estimated ',np.min(patch_CT_pred)
-    # print 'max ct estimated ',np.max(patch_CT_pred)
-    # print 'mean of ctpatch estimated ',np.mean(patch_CT_pred)
+    # print('mean of layer  ',np.mean(MR16_eval)
+    # print('min ct estimated ',np.min(patch_CT_pred)
+    # print('max ct estimated ',np.max(patch_CT_pred)
+    # print('mean of ctpatch estimated ',np.mean(patch_CT_pred)
     return patchOut
 
 '''
@@ -593,7 +594,7 @@ def evaluate_res(patch_MR, netG, modelPath, nd=2):
 
     shape = patch_MR.shape
     chn = shape[1]
-    #print 'channel is ',chn
+    #print('channel is ',chn
     if nd!=2:
         patch_MR = patch_MR.unsqueeze(0)
         res_MR = patch_MR
@@ -610,10 +611,10 @@ def evaluate_res(patch_MR, netG, modelPath, nd=2):
     #         netG.load_state_dict(torch.load(modelPath))
     netG.cuda()
     netG.eval()
-    #         print type(patch_MR)
+    #         print(type(patch_MR)
     res = netG(patch_MR,res_MR)
 
-    #         print res.size(),res.squeeze(0).size()
+    #         print(res.size(),res.squeeze(0).size()
     if isinstance(res, tuple):
         res = res[0]
     # _, tmp = res.squeeze(0).max(0)
@@ -622,10 +623,10 @@ def evaluate_res(patch_MR, netG, modelPath, nd=2):
 
     # imsave('mr32.png',np.squeeze(MR16_eval[0,:,:,2]))
     # imsave('ctpred.png',np.squeeze(patch_CT_pred[0,:,:,0]))
-    # print 'mean of layer  ',np.mean(MR16_eval)
-    # print 'min ct estimated ',np.min(patch_CT_pred)
-    # print 'max ct estimated ',np.max(patch_CT_pred)
-    # print 'mean of ctpatch estimated ',np.mean(patch_CT_pred)
+    # print('mean of layer  ',np.mean(MR16_eval)
+    # print('min ct estimated ',np.min(patch_CT_pred)
+    # print('max ct estimated ',np.max(patch_CT_pred)
+    # print('mean of ctpatch estimated ',np.mean(patch_CT_pred)
     return patchOut
 
 '''
@@ -656,9 +657,9 @@ def testOneSubject_aver_res(MR_image,CT_GT,MR_patch_sz,CT_patch_sz,step, netG, m
     margin3 = int((dFA[2]-dSeg[2])/2)
     cubicCnt = 0
     marginD = [margin1,margin2,margin3]
-    print 'matFA shape is ',matFA.shape
+    print('matFA shape is ',matFA.shape)
     matFAOut = np.zeros([row+2*marginD[0],col+2*marginD[1],leng+2*marginD[2]])
-    print 'matFAOut shape is ',matFAOut.shape
+    print('matFAOut shape is ',matFAOut.shape)
     matFAOut[marginD[0]:row+marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]] = matFA
 
     matFAOut[0:marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]] = matFA[0:marginD[0],:,:] #we'd better flip it along the first dimension
@@ -674,27 +675,27 @@ def testOneSubject_aver_res(MR_image,CT_GT,MR_patch_sz,CT_patch_sz,step, netG, m
     matOut = np.zeros((matSeg.shape[0],matSeg.shape[1],matSeg.shape[2]))
     used = np.zeros((matSeg.shape[0],matSeg.shape[1],matSeg.shape[2]))+eps
     #fid=open('trainxxx_list.txt','a');
-    print 'last i ',row-dSeg[0]
+    print('last i ',row-dSeg[0])
     for i in range(0,row-dSeg[0]+1,step[0]):
-#         print 'i ',i
+#         print('i ',i
         for j in range(0,col-dSeg[1]+1,step[1]):
             for k in range(0,leng-dSeg[2]+1,step[2]):
                 volSeg = matSeg[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]]
-                #print 'volSeg shape is ',volSeg.shape
+                #print('volSeg shape is ',volSeg.shape
                 volFA = matFAOut[i:i+dSeg[0]+2*marginD[0],j:j+dSeg[1]+2*marginD[1],k:k+dSeg[2]+2*marginD[2]]
-                #print 'volFA shape is ',volFA.shape
+                #print('volFA shape is ',volFA.shape
                 #mynet.blobs['dataMR'].data[0,0,...]=volFA
                 #mynet.forward()
                 #temppremat = mynet.blobs['softmax'].data[0].argmax(axis=0) #Note you have add softmax layer in deploy prototxt
-                #print 'max: ',np.amax(volFA),'min: ',np.amin(volFA)
+                #print('max: ',np.amax(volFA),'min: ',np.amin(volFA)
                 temppremat = evaluate_res(volFA, netG, modelPath, nd=nd)
-                #print 'max: ',np.amax(temppremat),'min: ',np.amin(temppremat)
-#                 print 'temppremat shape 1: ',temppremat.shape
+                #print('max: ',np.amax(temppremat),'min: ',np.amin(temppremat)
+#                 print('temppremat shape 1: ',temppremat.shape
                 if len(temppremat.shape)==2:
                     temppremat = np.expand_dims(temppremat,axis=0)
-                #print 'patchout shape ',temppremat.shape
+                #print('patchout shape ',temppremat.shape
                 #temppremat=volSeg
-#                 print 'temppremat shape 2: ',temppremat.shape
+#                 print('temppremat shape 2: ',temppremat.shape
                 matOut[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]] = matOut[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]]+temppremat;
                 used[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]] = used[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]]+1;
     matOut = matOut/used
@@ -729,9 +730,9 @@ def testOneSubject_aver_res_multiModal(FA_image, MR_image, CT_GT,MR_patch_sz,CT_
     margin3 = int((dFA[2]-dSeg[2])/2)
     cubicCnt = 0
     marginD = [margin1,margin2,margin3]
-    print 'matFA shape is ',matFA.shape
+    print('matFA shape is ',matFA.shape)
     matFAOut = np.zeros([row+2*marginD[0],col+2*marginD[1],leng+2*marginD[2]])
-    print 'matFAOut shape is ',matFAOut.shape
+    print('matFAOut shape is ',matFAOut.shape)
     matFAOut[marginD[0]:row+marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]] = matFA
 
     matFAOut[0:marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]] = matFA[0:marginD[0],:,:] #we'd better flip it along the first dimension
@@ -744,7 +745,7 @@ def testOneSubject_aver_res_multiModal(FA_image, MR_image, CT_GT,MR_patch_sz,CT_
     matFAOut[marginD[0]:row+marginD[0],marginD[1]:col+marginD[1],marginD[2]+leng:matFAOut.shape[2]] = matFA[:,:,leng-marginD[2]:matFA.shape[2]]
 
     matMROut = np.zeros([row+2*marginD[0],col+2*marginD[1],leng+2*marginD[2]])
-    print 'matMROut shape is ',matMROut.shape
+    print('matMROut shape is ',matMROut.shape)
     matMROut[marginD[0]:row+marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]] = matMR
 
     matMROut[0:marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]] = matMR[0:marginD[0],:,:] #we'd better flip it along the first dimension
@@ -760,27 +761,27 @@ def testOneSubject_aver_res_multiModal(FA_image, MR_image, CT_GT,MR_patch_sz,CT_
     matOut = np.zeros((matSeg.shape[0],matSeg.shape[1],matSeg.shape[2]))
     used = np.zeros((matSeg.shape[0],matSeg.shape[1],matSeg.shape[2]))+eps
     #fid=open('trainxxx_list.txt','a');
-    print 'last i ',row-dSeg[0]
+    print('last i ',row-dSeg[0])
     for i in range(0,row-dSeg[0]+1,step[0]):
-#         print 'i ',i
+#         print('i ',i
         for j in range(0,col-dSeg[1]+1,step[1]):
             for k in range(0,leng-dSeg[2]+1,step[2]):
                 volSeg = matSeg[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]]
-                #print 'volSeg shape is ',volSeg.shape
+                #print('volSeg shape is ',volSeg.shape
                 volFA = matFAOut[i:i+dSeg[0]+2*marginD[0],j:j+dSeg[1]+2*marginD[1],k:k+dSeg[2]+2*marginD[2]]
                 volMR = matMROut[i:i+dSeg[0]+2*marginD[0],j:j+dSeg[1]+2*marginD[1],k:k+dSeg[2]+2*marginD[2]]
                 volMat = np.concatenate((volFA, volMR), 0)
-                #print 'volFA shape is ',volFA.shape
+                #print('volFA shape is ',volFA.shape
                 #mynet.blobs['dataMR'].data[0,0,...]=volFA
                 #mynet.forward()
                 #temppremat = mynet.blobs['softmax'].data[0].argmax(axis=0) #Note you have add softmax layer in deploy prototxt
                 temppremat = evaluate_res(volMat, netG, modelPath)
-#                 print 'temppremat shape 1: ',temppremat.shape
+#                 print('temppremat shape 1: ',temppremat.shape
                 if len(temppremat.shape)==2:
                     temppremat = np.expand_dims(temppremat,axis=0)
-                #print 'patchout shape ',temppremat.shape
+                #print('patchout shape ',temppremat.shape
                 #temppremat=volSeg
-#                 print 'temppremat shape 2: ',temppremat.shape
+#                 print('temppremat shape 2: ',temppremat.shape
                 matOut[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]] = matOut[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]]+temppremat;
                 used[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]] = used[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]]+1;
     matOut = matOut/used
@@ -816,9 +817,9 @@ def testOneSubject_aver(MR_image,CT_GT,MR_patch_sz,CT_patch_sz,step, netG, model
     margin3 = int((dFA[2]-dSeg[2])/2)
     cubicCnt = 0
     marginD = [margin1,margin2,margin3]
-    print 'matFA shape is ',matFA.shape
+    print('matFA shape is ',matFA.shape)
     matFAOut = np.zeros([row+2*marginD[0],col+2*marginD[1],leng+2*marginD[2]])
-    print 'matFAOut shape is ',matFAOut.shape
+    print('matFAOut shape is ',matFAOut.shape)
     matFAOut[marginD[0]:row+marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]] = matFA
     
     matFAOut[0:marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]] = matFA[0:marginD[0],:,:] #we'd better flip it along the first dimension
@@ -834,15 +835,15 @@ def testOneSubject_aver(MR_image,CT_GT,MR_patch_sz,CT_patch_sz,step, netG, model
     matOut = np.zeros((matSeg.shape[0],matSeg.shape[1],matSeg.shape[2]))
     used = np.zeros((matSeg.shape[0],matSeg.shape[1],matSeg.shape[2]))+eps
     #fid=open('trainxxx_list.txt','a');
-    print 'last i ',row-dSeg[0]
+    print('last i ',row-dSeg[0])
     for i in range(0,row-dSeg[0]+1,step[0]):
-#         print 'i ',i
+#         print('i ',i
         for j in range(0,col-dSeg[1]+1,step[1]):
             for k in range(0,leng-dSeg[2]+1,step[2]):
                 volSeg = matSeg[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]]
-                #print 'volSeg shape is ',volSeg.shape
+                #print('volSeg shape is ',volSeg.shape
                 volFA = matFAOut[i:i+dSeg[0]+2*marginD[0],j:j+dSeg[1]+2*marginD[1],k:k+dSeg[2]+2*marginD[2]]
-                #print 'volFA shape is ',volFA.shape
+                #print('volFA shape is ',volFA.shape
                 #mynet.blobs['dataMR'].data[0,0,...]=volFA
                 #mynet.forward()
                 #temppremat = mynet.blobs['softmax'].data[0].argmax(axis=0) #Note you have add softmax layer in deploy prototxt
@@ -851,12 +852,12 @@ def testOneSubject_aver(MR_image,CT_GT,MR_patch_sz,CT_patch_sz,step, netG, model
                 else:
                     temppremat = evaluate(volFA, netG, modelPath)
                 # temppremat = evaluate(volFA, netG, modelPath)
-#                 print 'temppremat shape 1: ',temppremat.shape
+#                 print('temppremat shape 1: ',temppremat.shape
                 if len(temppremat.shape)==2:
                     temppremat = np.expand_dims(temppremat,axis=0)
-                #print 'patchout shape ',temppremat.shape
+                #print('patchout shape ',temppremat.shape
                 #temppremat=volSeg
-#                 print 'temppremat shape 2: ',temppremat.shape
+#                 print('temppremat shape 2: ',temppremat.shape
                 matOut[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]] = matOut[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]]+temppremat;
                 used[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]] = used[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]]+1;
     matOut = matOut/used
@@ -892,14 +893,14 @@ def testOneSubject_aver_MultiModal(FA_image, MR_image, CT_GT, MR_patch_sz, CT_pa
     margin3 = int((dFA[2] - dSeg[2]) / 2)
     cubicCnt = 0
     marginD = [margin1, margin2, margin3]
-    print 'matFA shape is ', matFA.shape
+    print('matFA shape is ', matFA.shape)
     matFAOut = np.zeros([row + 2 * marginD[0], col + 2 * marginD[1], leng + 2 * marginD[2]])
-    print 'matFAOut shape is ', matFAOut.shape
+    print('matFAOut shape is ', matFAOut.shape)
     matFAOut[marginD[0]:row + marginD[0], marginD[1]:col + marginD[1], marginD[2]:leng + marginD[2]] = matFA
 
-    print 'matMR shape is ', matMR.shape
+    print('matMR shape is ', matMR.shape)
     matMROut = np.zeros([row + 2 * marginD[0], col + 2 * marginD[1], leng + 2 * marginD[2]])
-    print 'matMROut shape is ', matMROut.shape
+    print('matMROut shape is ', matMROut.shape)
     matMROut[marginD[0]:row + marginD[0], marginD[1]:col + marginD[1], marginD[2]:leng + marginD[2]] = matMR
 
     ## matFA
@@ -936,18 +937,18 @@ def testOneSubject_aver_MultiModal(FA_image, MR_image, CT_GT, MR_patch_sz, CT_pa
     matOut = np.zeros((matSeg.shape[0], matSeg.shape[1], matSeg.shape[2]))
     used = np.zeros((matSeg.shape[0], matSeg.shape[1], matSeg.shape[2])) + eps
     # fid=open('trainxxx_list.txt','a');
-    print 'last i ', row - dSeg[0]
+    print('last i ', row - dSeg[0])
     for i in range(0, row - dSeg[0] + 1, step[0]):
-        #         print 'i ',i
+        #         print('i ',i
         for j in range(0, col - dSeg[1] + 1, step[1]):
             for k in range(0, leng - dSeg[2] + 1, step[2]):
                 volSeg = matSeg[i:i + dSeg[0], j:j + dSeg[1], k:k + dSeg[2]]
-                # print 'volSeg shape is ',volSeg.shape
+                # print('volSeg shape is ',volSeg.shape
                 volFA = matFAOut[i:i + dSeg[0] + 2 * marginD[0], j:j + dSeg[1] + 2 * marginD[1],
                         k:k + dSeg[2] + 2 * marginD[2]]
                 volMR = matMROut[i:i+dSeg[0]+2*marginD[0],j:j+dSeg[1]+2*marginD[1],k:k+dSeg[2]+2*marginD[2]]
                 volMat = np.concatenate((volFA, volMR), 0)
-                # print 'volFA shape is ',volFA.shape
+                # print('volFA shape is ',volFA.shape
                 # mynet.blobs['dataMR'].data[0,0,...]=volFA
                 # mynet.forward()
                 # temppremat = mynet.blobs['softmax'].data[0].argmax(axis=0) #Note you have add softmax layer in deploy prototxt
@@ -956,12 +957,12 @@ def testOneSubject_aver_MultiModal(FA_image, MR_image, CT_GT, MR_patch_sz, CT_pa
                 else:
                     temppremat = evaluate(volMat, netG, modelPath)
                 # temppremat = evaluate(volMat, netG, modelPath)
-                #                 print 'temppremat shape 1: ',temppremat.shape
+                #                 print('temppremat shape 1: ',temppremat.shape
                 if len(temppremat.shape) == 2:
                     temppremat = np.expand_dims(temppremat, axis=0)
-                # print 'patchout shape ',temppremat.shape
+                # print('patchout shape ',temppremat.shape
                 # temppremat=volSeg
-                #                 print 'temppremat shape 2: ',temppremat.shape
+                #                 print('temppremat shape 2: ',temppremat.shape
                 matOut[i:i + dSeg[0], j:j + dSeg[1], k:k + dSeg[2]] = matOut[i:i + dSeg[0], j:j + dSeg[1],
                                                                       k:k + dSeg[2]] + temppremat;
                 used[i:i + dSeg[0], j:j + dSeg[1], k:k + dSeg[2]] = used[i:i + dSeg[0], j:j + dSeg[1],
@@ -1000,9 +1001,9 @@ def testOneSubject(MR_image, CT_GT, NumOfClass, MR_patch_sz, CT_patch_sz, step, 
     cubicCnt = 0
     marginD = [margin1,margin2,margin3]
     
-    #print 'matFA shape is ',matFA.shape
+    #print('matFA shape is ',matFA.shape
     matFAOut = np.zeros([row+2*marginD[0],col+2*marginD[1],leng+2*marginD[2]])
-    #print 'matFAOut shape is ',matFAOut.shape
+    #print('matFAOut shape is ',matFAOut.shape
     matFAOut[marginD[0]:row+marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]] = matFA
 
 #     matFAOut[0:marginD[0],marginD[1]:col+marginD[1],marginD[2]:leng+marginD[2]]=matFA[0:marginD[0],:,:] #we'd better flip it along the first dimension
@@ -1043,7 +1044,7 @@ def testOneSubject(MR_image, CT_GT, NumOfClass, MR_patch_sz, CT_patch_sz, step, 
         for j in range(0,col-dSeg[1]+1,step[1]):
             for k in range(0,leng-dSeg[2]+1,step[2]):
                 volSeg = matSeg[i:i+dSeg[0],j:j+dSeg[1],k:k+dSeg[2]]
-                #print 'volSeg shape is ',volSeg.shape
+                #print('volSeg shape is ',volSeg.shape
                 volFA = matFAOutScale[i:i+dSeg[0]+2*marginD[0],j:j+dSeg[1]+2*marginD[1],k:k+dSeg[2]+2*marginD[2]]
                 cnt = cnt + 1
                 temppremat = evaluate(volFA, netG, modelPath)
@@ -1060,7 +1061,7 @@ def testOneSubject(MR_image, CT_GT, NumOfClass, MR_patch_sz, CT_patch_sz, step, 
     #scio.savemat('matOut%s.mat'%fileID,{'matOut':matOut})
     matOut = matOut.argmax(axis=3)
     matOut = np.rint(matOut) #this is necessary to convert the data type to be accepted by NIFTI, otherwise will appear strange errors
-#     print 'line 378: matOut shape: ',matOut.shape
+#     print('line 378: matOut shape: ',matOut.shape
 #     matOut1 = matOut
 #     matOut1=np.zeros([matSeg.shape[0],matSeg.shape[1],matSeg.shape[2]])
 #     matOut1[:,y1:y2,x1:x2]=matOut

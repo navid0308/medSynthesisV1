@@ -4,9 +4,8 @@ for single input modality
 Created in June, 2016
 Author: Dong Nie
 '''
-
+from reslice import resize_3d
 import SimpleITK as sitk
-
 from multiprocessing import Pool
 import os, argparse
 import h5py
@@ -24,11 +23,11 @@ d2 = 64
 d3 = 64
 # output patch size
 dFA = [d1, d2, d3]  # size of patches of input data
-dSeg = [1, 64, 64]  # size of pathes of label data
+dSeg = [1, 64, 64]  # size of patches of label data
 # stride for extracting patches along the volume
 step1 = 1
-step2 = 16 
-step3 = 16
+step2 = 32
+step3 = 32
 step = [step1, step2, step3]
 
 
@@ -77,20 +76,18 @@ def extractPatch4OneSubject(matFA, matSeg, matMask, fileID, d, step, rate):
     rate2 = 1.0 / 4
     [row, col, leng] = matFA.shape
     cubicCnt = 0
-    estNum = 40000
-    trainFA = np.zeros([estNum, 1, dFA[0], dFA[1], dFA[2]], dtype=np.float16)
-    trainSeg = np.zeros([estNum, 1, dSeg[0], dSeg[1], dSeg[2]], dtype=np.float16)
-
-    print 'trainFA shape, ', trainFA.shape
+    estNum = 100000
+    testFA = np.zeros([estNum, 1, dFA[0], dFA[1], dFA[2]], dtype=np.float16)
+    testSeg = np.zeros([estNum, 1, dSeg[0], dSeg[1], dSeg[2]], dtype=np.float16)
     # to padding for input
-    margin1 = (dFA[0] - dSeg[0]) / 2
-    margin2 = (dFA[1] - dSeg[1]) / 2
-    margin3 = (dFA[2] - dSeg[2]) / 2
+    margin1 = (dFA[0] - dSeg[0]) // 2
+    margin2 = (dFA[1] - dSeg[1]) // 2
+    margin3 = (dFA[2] - dSeg[2]) // 2
     cubicCnt = 0
     marginD = [margin1, margin2, margin3]
-    print 'matFA shape is ', matFA.shape
+    #print 'matFA shape is ', matFA.shape
     matFAOut = np.zeros([row + 2 * marginD[0], col + 2 * marginD[1], leng + 2 * marginD[2]], dtype=np.float16)
-    print 'matFAOut shape is ', matFAOut.shape
+    #print 'matFAOut shape is ', matFAOut.shape
     matFAOut[marginD[0]:row + marginD[0], marginD[1]:col + marginD[1], marginD[2]:leng + marginD[2]] = matFA
 
     matSegOut = np.zeros([row + 2 * marginD[0], col + 2 * marginD[1], leng + 2 * marginD[2]], dtype=np.float16)
@@ -131,12 +128,9 @@ def extractPatch4OneSubject(matFA, matSeg, matMask, fileID, d, step, rate):
                                                                                                                                  2] - 1:-1]
         # for matseg, enlarge it by padding
     if margin1 != 0:
-        matSegOut[0:marginD[0], marginD[1]:col + marginD[1], marginD[2]:leng + marginD[2]] = matSeg[marginD[0] - 1::-1,
-                                                                                             :,
-                                                                                             :]  # reverse 0:marginD[0]
+        matSegOut[0:marginD[0], marginD[1]:col + marginD[1], marginD[2]:leng + marginD[2]] = matSeg[marginD[0] - 1::-1, :,:]  # reverse 0:marginD[0]
         matSegOut[row + marginD[0]:matSegOut.shape[0], marginD[1]:col + marginD[1],
-        marginD[2]:leng + marginD[2]] = matSeg[matSeg.shape[0] - 1:row - marginD[0] - 1:-1, :,
-                                        :]  # we'd better flip it along the 1st dimension
+        marginD[2]:leng + marginD[2]] = matSeg[matSeg.shape[0] - 1:row - marginD[0] - 1:-1, :,:] # we'd better flip it along the 1st dimension
     if margin2 != 0:
         matSegOut[marginD[0]:row + marginD[0], 0:marginD[1], marginD[2]:leng + marginD[2]] = matSeg[:,
                                                                                              marginD[1] - 1::-1,
@@ -185,28 +179,29 @@ def extractPatch4OneSubject(matFA, matSeg, matMask, fileID, d, step, rate):
                 volFA = matFAOut[i:i + dFA[0], j:j + dFA[1], k:k + dFA[2]]
 
 
-                trainFA[cubicCnt, 0, :, :, :] = volFA  # 32*32*32
+                testFA[cubicCnt, 0, :, :, :] = volFA  # 32*32*32
 
-                trainSeg[cubicCnt, 0, :, :, :] = volSeg  # 24*24*24
+                testSeg[cubicCnt, 0, :, :, :] = volSeg  # 24*24*24
 
-    trainFA = trainFA[0:cubicCnt, :, :, :, :]
-    trainSeg = trainSeg[0:cubicCnt, :, :, :, :]
+    testFA = testFA[0:cubicCnt, :, :, :, :]
+    testSeg = testSeg[0:cubicCnt, :, :, :, :]
 
-    with h5py.File('./trainMRCT_snorm_64_%s.h5' % fileID, 'w') as f:
-        f['dataMR'] = trainFA
-        f['dataCT'] = trainSeg
+    with h5py.File('D:/Datasets/slices/T1T2%s.h5' % fileID, 'w') as f:
+        f['T1'] = testFA
+        f['T2'] = testSeg
 
-    with open('./trainMRCT2D_snorm_64_list.txt', 'a') as f:
-        f.write('./trainMRCT_snorm_64_%s.h5\n' % fileID)
+    with open('D:/Datasets/slices/T1T2.txt', 'a') as f:
+        f.write('D:/Datasets/slices/T1T2%s.h5\n' % fileID)
+    
     return cubicCnt
 
-
 def main():
-    print opt
-    path = '/home/niedong/Data4LowDosePET/data_niigz_scale/'
-    path = '/shenlab/lab_stor5/dongnie/brain_mr2ct/original_data/' # path to the data, change to your own path
-    scan = ScanFile(path, postfix='_mr.hdr') # the specify item for your files, change to your own style
-    filenames = scan.scan_files()
+    t1_path = 'D:/Datasets/IXI-T1/' # path to the data, change to your own path
+    t2_path = 'D:/Datasets/IXI-T2/'
+    t1_scan = ScanFile(t1_path, postfix='nii.gz') # the specify item for your files, change to your own style
+    t2_scan = ScanFile(t2_path, postfix='nii.gz') # the specify item for your files, change to your own style
+    t1_filenames = t1_scan.scan_files()
+    t2_filenames = t2_scan.scan_files()
 
     # for input
     maxSource = 149.366742
@@ -222,41 +217,48 @@ def main():
     meanTarget = -601.1929
     stdTarget = 475.034
 
-    for filename in filenames:
+    counter = 0
 
-        print 'source filename: ', filename
+    for t1_filename, t2_filename in zip(t1_filenames, t2_filenames):
+        counter += 1
+        print(counter, t1_filename, t2_filename)
 
-        source_fn = filename
-        target_fn = filename.replace('_mr.hdr', '_ct.hdr')
+        source_fn = t1_filename
+        target_fn = t2_filename
 
         imgOrg = sitk.ReadImage(source_fn)
         sourcenp = sitk.GetArrayFromImage(imgOrg)
 
         imgOrg1 = sitk.ReadImage(target_fn)
         targetnp = sitk.GetArrayFromImage(imgOrg1)
-
+        
+        sourcenp = resize_3d(sourcenp)
+        targetnp = resize_3d(targetnp)
+        if(sourcenp.shape != targetnp.shape):
+            print(sourcenp.shape, targetnp.shape)
+        
         maskimg = sourcenp
 
         mu = np.mean(sourcenp)
 
         if opt.how2normalize == 1:
             maxV, minV = np.percentile(sourcenp, [99, 1])
-            print 'maxV,', maxV, ' minV, ', minV
+            #print 'maxV,', maxV, ' minV, ', minV
             sourcenp = (sourcenp - mu) / (maxV - minV)
-            print 'unique value: ', np.unique(targetnp)
+            #print 'unique value: ', np.unique(targetnp)
 
-        # for training data in pelvicSeg
+        # for testing data in pelvicSeg
         if opt.how2normalize == 2:
             maxV, minV = np.percentile(sourcenp, [99, 1])
-            print 'maxV,', maxV, ' minV, ', minV
+            #print 'maxV,', maxV, ' minV, ', minV
             sourcenp = (sourcenp - mu) / (maxV - minV)
-            print 'unique value: ', np.unique(targetnp)
+            #print 'unique value: ', np.unique(targetnp)
 
-        # for training data in pelvicSegRegH5
+        # for testing data in pelvicSegRegH5
         if opt.how2normalize == 3:
             std = np.std(sourcenp)
             sourcenp = (sourcenp - mu) / std
-            print 'maxV,', np.ndarray.max(sourcenp), ' minV, ', np.ndarray.min(sourcenp)
+            #print 'maxV,', np.ndarray.max(sourcenp), ' minV, ', np.ndarray.min(sourcenp)
 
         if opt.how2normalize == 4:
             maxSource = 149.366742
@@ -283,7 +285,7 @@ def main():
             meanTarget = -601.1929
             stdTarget = 475.034
 
-            print 'target, max: ', np.amax(targetnp), ' target, min: ', np.amin(targetnp)
+            #print 'target, max: ', np.amax(targetnp), ' target, min: ', np.amin(targetnp)
 
             # matSource = (sourcenp - meanSource) / (stdSource)
             matSource = sourcenp
@@ -292,70 +294,69 @@ def main():
         if opt.how2normalize == 6:
             maxPercentSource, minPercentSource = np.percentile(sourcenp, [99.5, 0])
             maxPercentTarget, minPercentTarget = np.percentile(targetnp, [99.5, 0])
-            print 'maxPercentSource: ', maxPercentSource, ' minPercentSource: ', minPercentSource, ' maxPercentTarget: ', maxPercentTarget, 'minPercentTarget: ', minPercentTarget
+            #print 'maxPercentSource: ', maxPercentSource, ' minPercentSource: ', minPercentSource, ' maxPercentTarget: ', maxPercentTarget, 'minPercentTarget: ', minPercentTarget
 
             matSource = (sourcenp - minPercentSource) / (maxPercentSource - minPercentSource) #input
             #output, use input's statistical (if there is big difference between input and output, you can find a simple relation between input and output and then include this relation to normalize output with input's statistical)
             matTarget = (targetnp - minPercentSource) / (maxPercentSource - minPercentSource) 
 
-            print 'maxSource: ', np.amax(matSource),  ' maxTarget: ', np.amax(matTarget)
-            print 'minSource: ', np.amin(matSource),  ' minTarget: ', np.amin(matTarget)
+            #print 'maxSource: ', np.amax(matSource),  ' maxTarget: ', np.amax(matTarget)
+            #print 'minSource: ', np.amin(matSource),  ' minTarget: ', np.amin(matTarget)
 
         # maxV, minV = np.percentile(mrimg, [99.5, 0])
-        #         print 'maxV is: ',np.ndarray.max(mrimg)
+        #         #print 'maxV is: ',np.ndarray.max(mrimg)
         #         mrimg[np.where(mrimg>maxV)] = maxV
-        #         print 'maxV is: ',np.ndarray.max(mrimg)
+        #         #print 'maxV is: ',np.ndarray.max(mrimg)
         #         mu=np.mean(mrimg) # we should have a fixed std and mean
         #         std = np.std(mrimg)
         #         mrnp = (mrimg - mu)/std
-        #         print 'maxV,',np.ndarray.max(mrnp),' minV, ',np.ndarray.min(mrnp)
+        #         #print 'maxV,',np.ndarray.max(mrnp),' minV, ',np.ndarray.min(mrnp)
 
         # matLPET = (mrimg - meanLPET)/(stdLPET)
-        # print 'lpet: maxV,',np.ndarray.max(matLPET),' minV, ',np.ndarray.min(matLPET), ' meanV: ', np.mean(matLPET), ' stdV: ', np.std(matLPET)
+        # #print 'lpet: maxV,',np.ndarray.max(matLPET),' minV, ',np.ndarray.min(matLPET), ' meanV: ', np.mean(matLPET), ' stdV: ', np.std(matLPET)
 
         # matLPET = (mrnp - minLPET)/(maxPercentLPET-minLPET)
-        # print 'lpet: maxV,',np.ndarray.max(matLPET),' minV, ',np.ndarray.min(matLPET), ' meanV: ', np.mean(matLPET), ' stdV: ', np.std(matLPET)
+        # #print 'lpet: maxV,',np.ndarray.max(matLPET),' minV, ',np.ndarray.min(matLPET), ' meanV: ', np.mean(matLPET), ' stdV: ', np.std(matLPET)
 
         #         maxV1, minV1 = np.percentile(mrimg1, [99.5 ,1])
-        #         print 'maxV1 is: ',np.ndarray.max(mrimg1)
+        #         #print 'maxV1 is: ',np.ndarray.max(mrimg1)
         #         mrimg1[np.where(mrimg1>maxV1)] = maxV1
-        #         print 'maxV1 is: ',np.ndarray.max(mrimg1)
+        #         #print 'maxV1 is: ',np.ndarray.max(mrimg1)
         #         mu1 = np.mean(mrimg1) # we should have a fixed std and mean
         #         std1 = np.std(mrimg1)
         #         mrnp1 = (mrimg1 - mu1)/std1
-        #         print 'maxV1,',np.ndarray.max(mrnp1),' minV, ',np.ndarray.min(mrnp1)
+        #         #print 'maxV1,',np.ndarray.max(mrnp1),' minV, ',np.ndarray.min(mrnp1)
 
         # ctnp[np.where(ctnp>maxPercentCT)] = maxPercentCT
         # matCT = (ctnp - meanCT)/stdCT
-        # print 'ct: maxV,',np.ndarray.max(matCT),' minV, ',np.ndarray.min(matCT), 'meanV: ', np.mean(matCT), 'stdV: ', np.std(matCT)
+        # #print 'ct: maxV,',np.ndarray.max(matCT),' minV, ',np.ndarray.min(matCT), 'meanV: ', np.mean(matCT), 'stdV: ', np.std(matCT)
 
         #         maxVal = np.amax(labelimg)
         #         minVal = np.amin(labelimg)
-        #         print 'maxV is: ', maxVal, ' minVal is: ', minVal
+        #         #print 'maxV is: ', maxVal, ' minVal is: ', minVal
         #         mu=np.mean(labelimg) # we should have a fixed std and mean
         #         std = np.std(labelimg)
         #
         #         labelimg = (labelimg - minVal)/(maxVal - minVal)
         #
-        #         print 'maxV,',np.ndarray.max(labelimg),' minV, ',np.ndarray.min(labelimg)
+        #         #print 'maxV,',np.ndarray.max(labelimg),' minV, ',np.ndarray.min(labelimg)
         # you can do what you want here for for your label img
 
         # matSPET = (labelimg - minSPET)/(maxPercentSPET-minSPET)
-        # print 'spet: maxV,',np.ndarray.max(matSPET),' minV, ',np.ndarray.min(matSPET), ' meanV: ',np.mean(matSPET), ' stdV: ', np.std(matSPET)
+        # #print 'spet: maxV,',np.ndarray.max(matSPET),' minV, ',np.ndarray.min(matSPET), ' meanV: ',np.mean(matSPET), ' stdV: ', np.std(matSPET)
 
-        sdir = filename.split('/')
-        print 'sdir is, ', sdir, 'and s6 is, ', sdir[len(sdir)-1]
+        sdir = t1_filename.split('/')
+        #print 'sdir is, ', sdir, 'and s6 is, ', sdir[len(sdir)-1]
         lpet_fn = sdir[len(sdir)-1]
         words = lpet_fn.split('_')
-        print 'words are, ', words
+        #print 'words are, ', words
         # ind = int(words[0])
 
         fileID = words[0]
         rate = 1
         cubicCnt = extractPatch4OneSubject(matSource, matTarget, maskimg, fileID, dSeg, step, rate)
         # cubicCnt = extractPatch4OneSubject(mrnp, matCT, hpetnp, maskimg, fileID,dSeg,step,rate)
-        print '# of patches is ', cubicCnt
-
+        # print('# of patches is ', cubicCnt)
         # reverse along the 1st dimension
         rmatSource = matSource[matSource.shape[0] - 1::-1, :, :]
         rmatTarget = matTarget[matTarget.shape[0] - 1::-1, :, :]
@@ -363,8 +364,7 @@ def main():
         rmaskimg = maskimg[maskimg.shape[0] - 1::-1, :, :]
         fileID = words[0] + 'r'
         cubicCnt = extractPatch4OneSubject(rmatSource, rmatTarget, rmaskimg, fileID, dSeg, step, rate)
-        print '# of patches is ', cubicCnt
-
+        #print '# of patches is ', cubicCnt
 
 if __name__ == '__main__':
     main()

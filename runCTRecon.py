@@ -12,35 +12,36 @@ from Unet2d_pytorch import UNet, ResUNet, UNet_LRes, ResUNet_LRes, Discriminator
 from Unet3d_pytorch import UNet3D
 from nnBuildUnits import CrossEntropy3d, topK_RegLoss, RelativeThreshold_RegLoss, gdl_loss, adjust_learning_rate, calc_gradient_penalty
 import time
+from reslice import resize_3d
 import SimpleITK as sitk
 
 # Training settings
 parser = argparse.ArgumentParser(description="PyTorch InfantSeg")
-parser.add_argument("--gpuID", type=int, default=1, help="how to normalize the data")
+parser.add_argument("--gpuID", type=int, default=0, help="how to normalize the data")
 parser.add_argument("--isAdLoss", action="store_true", help="is adversarial loss used?", default=False)
 parser.add_argument("--isWDist", action="store_true", help="is adversarial loss with WGAN-GP distance?", default=False)
 parser.add_argument("--lambda_AD", default=0.05, type=float, help="weight for AD loss, Default: 0.05")
 parser.add_argument("--lambda_D_WGAN_GP", default=10, type=float, help="weight for gradient penalty of WGAN-GP, Default: 10")
 parser.add_argument("--how2normalize", type=int, default=6, help="how to normalize the data")
-parser.add_argument("--whichLoss", type=int, default=1, help="which loss to use: 1. LossL1, 2. lossRTL1, 3. MSE (default)")
+parser.add_argument("--whichLoss", type=int, default=3, help="which loss to use: 1. LossL1, 2. lossRTL1, 3. MSE (default)")
 parser.add_argument("--isGDL", action="store_true", help="do we use GDL loss?", default=True)
 parser.add_argument("--gdlNorm", default=2, type=int, help="p-norm for the gdl loss, Default: 2")
 parser.add_argument("--lambda_gdl", default=0.05, type=float, help="Weight for gdl loss, Default: 0.05")
 parser.add_argument("--whichNet", type=int, default=4, help="which loss to use: 1. UNet, 2. ResUNet, 3. UNet_LRes and 4. ResUNet_LRes (default, 3)")
 parser.add_argument("--lossBase", type=int, default=1, help="The base to multiply the lossG_G, Default (1)")
-parser.add_argument("--batchSize", type=int, default=32, help="training batch size")
+parser.add_argument("--batchSize", type=int, default=10, help="training batch size")
 parser.add_argument("--isMultiSource", action="store_true", help="is multiple modality used?", default=False)
 parser.add_argument("--numOfChannel_singleSource", type=int, default=5, help="# of channels for a 2D patch for the main modality (Default, 5)")
 parser.add_argument("--numOfChannel_allSource", type=int, default=5, help="# of channels for a 2D patch for all the concatenated modalities (Default, 5)")
-parser.add_argument("--numofIters", type=int, default=200000, help="number of iterations to train for")
-parser.add_argument("--showTrainLossEvery", type=int, default=100, help="number of iterations to show train loss")
-parser.add_argument("--saveModelEvery", type=int, default=5000, help="number of iterations to save the model")
-parser.add_argument("--showValPerformanceEvery", type=int, default=1000, help="number of iterations to show validation performance")
-parser.add_argument("--showTestPerformanceEvery", type=int, default=5000, help="number of iterations to show test performance")
+parser.add_argument("--numofIters", type=int, default=100000, help="number of iterations to train for")
+parser.add_argument("--showTrainLossEvery", type=int, default=5000, help="number of iterations to show train loss")
+parser.add_argument("--saveModelEvery", type=int, default=10000, help="number of iterations to save the model")
+parser.add_argument("--showValPerformanceEvery", type=int, default=20000, help="number of iterations to show validation performance")
+parser.add_argument("--showTestPerformanceEvery", type=int, default=25000, help="number of iterations to show test performance")
 parser.add_argument("--lr", type=float, default=5e-3, help="Learning Rate. Default=1e-4")
 parser.add_argument("--lr_netD", type=float, default=5e-3, help="Learning Rate for discriminator. Default=5e-3")
 parser.add_argument("--dropout_rate", default=0.2, type=float, help="prob to drop neurons to zero: 0.2")
-parser.add_argument("--decLREvery", type=int, default=10000, help="Sets the learning rate to the initial LR decayed by momentum every n iterations, Default: n=40000")
+parser.add_argument("--decLREvery", type=int, default=25000, help="Sets the learning rate to the initial LR decayed by momentum every n iterations, Default: n=40000")
 parser.add_argument("--lrDecRate", type=float, default=0.5, help="The weight for decreasing learning rate of netG Default=0.5")
 parser.add_argument("--lrDecRate_netD", type=float, default=0.1, help="The weight for decreasing learning rate of netD. Default=0.1")
 parser.add_argument("--cuda", action="store_true", help="Use cuda?", default=True)
@@ -51,16 +52,16 @@ parser.add_argument("--momentum", default=0.9, type=float, help="Momentum, Defau
 parser.add_argument("--weight-decay", "--wd", default=1e-4, type=float, help="weight decay, Default: 1e-4")
 parser.add_argument("--RT_th", default=0.005, type=float, help="Relative thresholding: 0.005")
 parser.add_argument("--pretrained", default="", type=str, help="path to pretrained model (default: none)")
-parser.add_argument("--prefixModelName", default="/home/niedong/Data4LowDosePET/pytorch_UNet/resunet2d_dp_pet_BatchAug_sNorm_lres_bn_lr5e3_lrdec_base1_lossL1_lossGDL0p05_0705_", type=str, help="prefix of the to-be-saved model name")
-parser.add_argument("--prefixPredictedFN", default="preSub1_pet_BatchAug_sNorm_resunet_dp_lres_bn_lr5e3_lrdec_base1_lossL1_lossGDL0p05_0705_", type=str, help="prefix of the to-be-saved predicted filename")
-parser.add_argument("--test_input_file_name",default='sub13_mr.hdr',type=str, help="the input file name for testing subject")
-parser.add_argument("--test_gt_file_name",default='sub13_ct.hdr',type=str, help="the ground-truth file name for testing subject") 
+parser.add_argument("--prefixModelName", default="T1T2-MN", type=str, help="prefix of the to-be-saved model name")
+parser.add_argument("--prefixPredictedFN", default="T1T2-PFN", type=str, help="prefix of the to-be-saved predicted filename")
+parser.add_argument("--test_input_file_name",default="IXI450-Guys-1093-T1.nii.gz",type=str, help="the input file name for testing subject")
+parser.add_argument("--test_gt_file_name",default="IXI450-Guys-1093-T1.nii.gz",type=str, help="the ground-truth file name for testing subject") 
 
 global opt, model 
 opt = parser.parse_args()
 
 def main():    
-    print opt    
+    print(opt)
         
 #     prefixModelName = 'Regressor_1112_'
 #     prefixPredictedFN = 'preSub1_1112_'
@@ -125,9 +126,9 @@ def main():
 #     inputs=torch.randn(1000,1,32,32)
 #     targets=torch.LongTensor(1000)
     
-    path_test ='/home/niedong/DataCT/data_niigz/'
-    path_patients_h5 = '/home/niedong/DataCT/h5Data_snorm/trainBatch2D_H5'
-    path_patients_h5_val ='/home/niedong/DataCT/h5Data_snorm/valBatch2D_H5'
+    path_test ='D:/Datasets/test/'
+    path_patients_h5 = 'D:/Datasets/train/'
+    path_patients_h5_test ='D:/Datasets/val/'
 #     batch_size=10
     #data_generator = Generator_2D_slices(path_patients_h5,opt.batchSize,inputKey='data3T',outputKey='data7T')
     #data_generator_test = Generator_2D_slices(path_patients_h5_test,opt.batchSize,inputKey='data3T',outputKey='data7T')
@@ -135,8 +136,8 @@ def main():
         data_generator = Generator_2D_slicesV1(path_patients_h5,opt.batchSize, inputKey='dataLPET', segKey='dataCT', contourKey='dataHPET')
         data_generator_test = Generator_2D_slicesV1(path_patients_h5_val, opt.batchSize, inputKey='dataLPET', segKey='dataCT', contourKey='dataHPET')
     else:
-        data_generator = Generator_2D_slices(path_patients_h5,opt.batchSize,inputKey='dataMR',outputKey='dataCT')
-        data_generator_test = Generator_2D_slices(path_patients_h5_test,opt.batchSize,inputKey='dataMR',outputKey='dataCT')
+        data_generator = Generator_2D_slices(path_patients_h5,opt.batchSize,inputKey='T1',outputKey='T2')
+        data_generator_test = Generator_2D_slices(path_patients_h5_test,opt.batchSize,inputKey='T1',outputKey='T2')
 
     #data_generator = Generator_2D_slicesV1(path_patients_h5,opt.batchSize, inputKey='dataLPET', segKey='dataCT', contourKey='dataHPET')
     #data_generator_test = Generator_2D_slicesV1(path_patients_h5_val, opt.batchSize, inputKey='dataLPET', segKey='dataCT', contourKey='dataHPET')
@@ -156,13 +157,12 @@ def main():
     start = time.time()
     for iter in range(opt.start_epoch, opt.numofIters+1):
         #print('iter %d'%iter)
-                #print('iter %d'%iter)
         if opt.isMultiSource:
-            inputs, exinputs, labels = data_generator.next()
+            inputs, exinputs, labels = data_generator.__next__()
         else:
-            inputs, labels = data_generator.next()
+            inputs, labels = data_generator.__next__()
             exinputs = inputs
-#        inputs, exinputs, labels = data_generator.next()
+#        inputs, exinputs, labels = data_generator.__next__()
 
 #         xx = np.transpose(inputs,(5,64,64))
 #         inputs = np.transpose(inputs,(0,3,1,2))
@@ -224,9 +224,9 @@ def main():
             batch_size = inputs.size(0)
             real_label = torch.ones(batch_size,1)
             real_label = real_label.cuda()
-            #print(real_label.size())
+            print(real_label.size())
             real_label = Variable(real_label)
-            #print(outputD_real.size())
+            print(outputD_real.size())
             loss_real = criterion_bce(outputD_real,real_label)
             loss_real.backward()
             #train with fake data
@@ -240,7 +240,7 @@ def main():
             
             lossD = loss_real + loss_fake
 #             print 'loss_real is ',loss_real.data[0],'loss_fake is ',loss_fake.data[0],'outputD_real is',outputD_real.data[0]
-#             print('loss for discriminator is %f'%lossD.data[0])
+#            print('loss for discriminator is %f'%lossD.data[0])
             #update network parameters
             optimizerD.step()
             
@@ -352,34 +352,34 @@ def main():
         
         optimizer.step() #update network parameters
 
-        #print('loss for generator is %f'%lossG.data[0])
+        #print('loss for generator is %f'%lossG_G.data[0])
         #print statistics
         running_loss = running_loss + lossG_G.data[0]
 
         
         if iter%opt.showTrainLossEvery==0: #print every 2000 mini-batches
-            print '************************************************'
-            print 'time now is: ' + time.asctime(time.localtime(time.time()))
+            print('************************************************')
+            print('time now is: ' + time.asctime(time.localtime(time.time())))
 #             print 'running loss is ',running_loss
-            print 'average running loss for generator between iter [%d, %d] is: %.5f'%(iter - 100 + 1,iter,running_loss/100)
+            print('average running loss for generator between iter [%d, %d] is: %.5f'%(iter - 100 + 1,iter,running_loss/100))
             
-            print 'lossG_G is %.5f respectively.'%(lossG_G.data[0])
+            print('lossG_G is %.5f respectively.'%(lossG_G.data[0]))
 
             if opt.isGDL:
-                print 'loss for GDL loss is %f'%lossG_gdl.data[0] 
+                print('loss for GDL loss is %f'%lossG_gdl.data[0])
 
             if opt.isAdLoss:
-                print 'loss_real is ',loss_real.data[0],'loss_fake is ',loss_fake.data[0],'outputD_real is',outputD_real.data[0]
-                print 'loss for discriminator is %f'%lossD.data[0]  
-                print 'lossG_D for discriminator is %f'%lossG_D.data[0]  
+                print('loss_real is ',loss_real.data[0],'loss_fake is ',loss_fake.data[0],'outputD_real is',outputD_real.data[0])
+                print('loss for discriminator is %f'%lossD.data[0])
+                print('lossG_D for discriminator is %f'%lossG_D.data[0])
 
             if opt.isWDist:
-                print 'loss_real is ',torch.mean(D_real).data[0],'loss_fake is ',torch.mean(D_fake).data[0]
+                print('loss_real is ',torch.mean(D_real).data[0],'loss_fake is ',torch.mean(D_fake).data[0])
                 print('loss for discriminator is %f'%Wasserstein_D.data[0], ' D cost is %f'%D_cost)                
-                print 'lossG_D for discriminator is %f'%lossG_D.data[0]  
+                print('lossG_D for discriminator is %f'%lossG_D.data[0])  
   
-            print 'cost time for iter [%d, %d] is %.2f'%(iter - 100 + 1,iter, time.time()-start)
-            print '************************************************'
+            print('cost time for iter [%d, %d] is %.2f'%(iter - 100 + 1,iter, time.time()-start))
+            print('************************************************')
             running_loss = 0.0
             start = time.time()
         if iter%opt.saveModelEvery==0: #save the model
@@ -388,7 +388,7 @@ def main():
                 'model': net.state_dict()
             }
             torch.save(state, opt.prefixModelName+'%d.pt'%iter)
-            print 'save model: '+opt.prefixModelName+'%d.pt'%iter
+            print('save model: '+opt.prefixModelName+'%d.pt'%iter)
 
             if opt.isAdLoss or opt.isWDist:
                 torch.save(netD.state_dict(), opt.prefixModelName+'_net_D%d.pt'%iter)
@@ -402,11 +402,11 @@ def main():
                 
         if iter%opt.showValPerformanceEvery==0: #test one subject
             # to test on the validation dataset in the format of h5 
-#            inputs,exinputs,labels = data_generator_test.next()
+#            inputs,exinputs,labels = data_generator_test.__next__()
             if opt.isMultiSource:
-                inputs, exinputs, labels = data_generator.next()
+                inputs, exinputs, labels = data_generator.__next__()
             else:
-                inputs, labels = data_generator.next()
+                inputs, labels = data_generator.__next__()
                 exinputs = inputs
 
             # inputs = np.transpose(inputs,(0,3,1,2))
@@ -448,17 +448,17 @@ def main():
             else:
                 lossG_G = criterion_L2(torch.squeeze(outputG), torch.squeeze(labels))
             lossG_G = opt.lossBase * lossG_G
-            print '.......come to validation stage: iter {}'.format(iter),'........'
-            print 'lossG_G is %.5f.'%(lossG_G.data[0])
+            print('.......come to validation stage: iter {}'.format(iter),'........')
+            print('lossG_G is %.5f.'%(lossG_G.data[0]))
 
             if opt.isGDL:
                 lossG_gdl = criterion_gdl(outputG, torch.unsqueeze(torch.squeeze(labels,1),1))
-                print 'loss for GDL loss is %f'%lossG_gdl.data[0]
+                print('loss for GDL loss is %f'%lossG_gdl.data[0])
 
         if iter % opt.showTestPerformanceEvery == 0:  # test one subject
-             mr_test_itk=sitk.ReadImage(os.path.join(path_test,opt.test_input_file_name))
-            ct_test_itk=sitk.ReadImage(os.path.join(path_test,opt.test_input_file_name))
-            hpet_test_itk = sitk.ReadImage(os.path.join(path_test, opt.test_gt_file_name))
+            mr_test_itk=sitk.ReadImage(os.path.join(path_test,opt.test_input_file_name))
+            ct_test_itk=sitk.ReadImage(os.path.join(path_test,(opt.test_input_file_name).replace("T1", "T2")))
+            hpet_test_itk = sitk.ReadImage(os.path.join(path_test, (opt.test_gt_file_name).replace("T1", "T2")))
             #mr_test_itk=sitk.ReadImage(os.path.join(path_test,'sub1_sourceCT.nii.gz'))
             #ct_test_itk=sitk.ReadImage(os.path.join(path_test,'sub1_extraCT.nii.gz'))
             #hpet_test_itk = sitk.ReadImage(os.path.join(path_test, 'sub1_targetCT.nii.gz'))
@@ -468,8 +468,11 @@ def main():
             direction = hpet_test_itk.GetDirection()
 
             mrnp=sitk.GetArrayFromImage(mr_test_itk)
+            mrnp = resize_3d(mrnp)
             ctnp=sitk.GetArrayFromImage(ct_test_itk)
+            ctnp = resize_3d(ctnp)
             hpetnp=sitk.GetArrayFromImage(hpet_test_itk)
+            hpetnp = resize_3d(hpetnp)
 
             ##### specific normalization #####
             # mu = np.mean(mrnp)
@@ -482,22 +485,22 @@ def main():
             #for training data in pelvicSeg
             if opt.how2normalize == 1:
                 maxV, minV = np.percentile(mrnp, [99 ,1])
-                print 'maxV,',maxV,' minV, ',minV
+                print('maxV,',maxV,' minV, ',minV)
                 mrnp = (mrnp-mu)/(maxV-minV)
-                print 'unique value: ',np.unique(ctnp)
+                print('unique value: ',np.unique(ctnp))
 
             #for training data in pelvicSeg
             if opt.how2normalize == 2:
                 maxV, minV = np.percentile(mrnp, [99 ,1])
-                print 'maxV,',maxV,' minV, ',minV
+                print('maxV,',maxV,' minV, ',minV)
                 mrnp = (mrnp-mu)/(maxV-minV)
-                print 'unique value: ',np.unique(ctnp)
+                print('unique value: ',np.unique(ctnp))
 
             #for training data in pelvicSegRegH5
             if opt.how2normalize== 3:
                 std = np.std(mrnp)
                 mrnp = (mrnp - mu)/std
-                print 'maxV,',np.ndarray.max(mrnp),' minV, ',np.ndarray.min(mrnp)
+                print('maxV,',np.ndarray.max(mrnp),' minV, ',np.ndarray.min(mrnp))
 
             if opt.how2normalize == 4:
                 maxLPET = 149.366742
@@ -533,8 +536,7 @@ def main():
                 meanCT = -601.1929
                 stdCT = 475.034
 
-                print
-                'ct, max: ', np.amax(ctnp), ' ct, min: ', np.amin(ctnp)
+                print('ct, max: ', np.amax(ctnp), ' ct, min: ', np.amin(ctnp))
 
                 # matLPET = (mrnp - meanLPET) / (stdLPET)
                 matLPET = mrnp
@@ -544,7 +546,7 @@ def main():
             if opt.how2normalize == 6:
                 maxPercentPET, minPercentPET = np.percentile(mrnp, [99.5, 0])
                 maxPercentCT, minPercentCT = np.percentile(ctnp, [99.5, 0])
-                print 'maxPercentPET: ', maxPercentPET, ' minPercentPET: ', minPercentPET, ' maxPercentCT: ', maxPercentCT, 'minPercentCT: ', minPercentCT
+                print('maxPercentPET: ', maxPercentPET, ' minPercentPET: ', minPercentPET, ' maxPercentCT: ', maxPercentCT, 'minPercentCT: ', minPercentCT)
 
                 matLPET = (mrnp - minPercentPET) / (maxPercentPET - minPercentPET)
                 matSPET = (hpetnp - minPercentPET) / (maxPercentPET - minPercentPET)
@@ -556,9 +558,9 @@ def main():
                 matFA = matLPET
                 matGT = hpetnp
 
-                print 'matFA shape: ',matFA.shape, ' matGT shape: ', matGT.shape
+                print('matFA shape: ',matFA.shape, ' matGT shape: ', matGT.shape)
                 matOut = testOneSubject_aver_res(matFA,matGT,[5,64,64],[1,64,64],[1,32,32],net,opt.prefixModelName+'%d.pt'%iter)
-                print 'matOut shape: ',matOut.shape
+                print('matOut shape: ',matOut.shape)
                 if opt.how2normalize==6:
                     ct_estimated = matOut * (maxPercentPET - minPercentPET) + minPercentPET
                 else:
@@ -567,9 +569,9 @@ def main():
 
                 itspsnr = psnr(ct_estimated, matGT)
 
-                print 'pred: ',ct_estimated.dtype, ' shape: ',ct_estimated.shape
-                print 'gt: ',ctnp.dtype,' shape: ',ct_estimated.shape
-                print 'psnr = ',itspsnr
+                print('pred: ',ct_estimated.dtype, ' shape: ',ct_estimated.shape)
+                print('gt: ',ctnp.dtype,' shape: ',ct_estimated.shape)
+                print('psnr = ',itspsnr)
                 volout = sitk.GetImageFromArray(ct_estimated)
                 volout.SetSpacing(spacing)
                 volout.SetOrigin(origin)
@@ -578,10 +580,10 @@ def main():
             else:
                 matFA = matLPET
                 matGT = hpetnp
-                print 'matFA shape: ', matFA.shape, ' matGT shape: ', matGT.shape
+                print('matFA shape: ', matFA.shape, ' matGT shape: ', matGT.shape)
                 matOut = testOneSubject_aver_res_multiModal(matFA, matCT, matGT, [5, 64, 64], [1, 64, 64], [1, 32, 32], net,
                                                             opt.prefixModelName + '%d.pt' % iter)
-                print 'matOut shape: ', matOut.shape
+                print('matOut shape: ', matOut.shape)
                 if opt.how2normalize==6:
                     ct_estimated = matOut * (maxPercentPET - minPercentPET) + minPercentPET
                 else:
@@ -589,18 +591,18 @@ def main():
 
                 itspsnr = psnr(ct_estimated, matGT)
 
-                print 'pred: ', ct_estimated.dtype, ' shape: ', ct_estimated.shape
-                print 'gt: ', ctnp.dtype, ' shape: ', ct_estimated.shape
-                print 'psnr = ', itspsnr
+                print('pred: ', ct_estimated.dtype, ' shape: ', ct_estimated.shape)
+                print('gt: ', ctnp.dtype, ' shape: ', ct_estimated.shape)
+                print('psnr = ', itspsnr)
                 volout = sitk.GetImageFromArray(ct_estimated)
                 volout.SetSpacing(spacing)
                 volout.SetOrigin(origin)
                 volout.SetDirection(direction)
                 sitk.WriteImage(volout, opt.prefixPredictedFN + '{}'.format(iter) + '.nii.gz')
         
-    print('Finished Training')
+print('Finished Training')
     
 if __name__ == '__main__':   
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(opt.gpuID)  
+    os.environ['CUDA_VISIBLE_DEVICES'] = "0"#str(opt.gpuID)  
     main()
     

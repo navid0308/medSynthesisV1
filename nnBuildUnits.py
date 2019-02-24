@@ -88,9 +88,9 @@ class conv23D_bn_relu_Unit(nn.Module):
         self.relu = nn.ReLU()
         
     def forward(self, x):
-#         print 'x.shape: ',x.shape
+#         #print 'x.shape: ',x.shape
 #         xx = self.conv(x)
-#         print 'xx.shape: ', xx.shape
+#         #print 'xx.shape: ', xx.shape
         return self.relu(self.bn(self.conv(x)))
 
 '''
@@ -272,7 +272,7 @@ class residualUnit3(nn.Module):
         super(residualUnit3, self).__init__()
         #         mid_size = in_size/2
         mid_size = out_size/2 ###I think it should better be half the out size instead of the input size
-#         print 'line 74, in and out size are, ',in_size,' ',mid_size
+#         #print 'line 74, in and out size are, ',in_size,' ',mid_size
 
         if isDilation:
             self.conv1_bn_relu = conv23D_bn_relu_Unit(in_channels=in_size, out_channels=mid_size, kernel_size=1, stride=1, padding=0, dilation=2, nd=nd)
@@ -309,7 +309,7 @@ class residualUnit3(nn.Module):
         
     def forward(self, x): 
         identity_data = x
-#         print 'line 94, size of x is ', x.size()
+#         #print 'line 94, size of x is ', x.size()
 #         output = self.relu(self.bn1(self.conv1(x)))
 #         output = self.relu(self.bn2(self.conv2(output)))
 #         output = self.bn3(self.conv3(output))
@@ -324,7 +324,7 @@ class residualUnit3(nn.Module):
         if outSZ[1]!=idSZ[1] or self.isEmptyBranch1==False:
             identity_data = self.convX_bn(identity_data)
 #             identity_data = self.bnX(self.convX(identity_data))
-#         print output.size(), identity_data.size()
+#         #print output.size(), identity_data.size()
         output = torch.add(output,identity_data)
         output = self.relu(output)
         return output 
@@ -378,7 +378,7 @@ class ResUpUnit(nn.Module):
 #         self.dropout2d = nn.Dropout2d(spatial_dropout_rate)
         self.spatial_dropout_rate = spatial_dropout_rate
         self.conv2 = residualUnit3(out_size, out_size, isDilation=isConvDilation, isEmptyBranch1=False, nd=nd)
-#         print 'line 147, in_size is ',out_size,' out_size is ',out_size
+#         #print 'line 147, in_size is ',out_size,' out_size is ',out_size
 
         self.relu = nn.ReLU()
 
@@ -394,24 +394,24 @@ class ResUpUnit(nn.Module):
         return layer[:, :, xy1:(xy1 + target_size), xy1:(xy1 + target_size)]
 
     def forward(self, x, bridge):#bridge is the corresponding lower layer
-#         print 'x.shape: ', x.size()
+#         #print 'x.shape: ', x.size()
         up = self.up(x)
-#         print 'up.shape: ',up.size()
-#         print 'line 158 ',up.size()
+#         #print 'up.shape: ',up.size()
+#         #print 'line 158 ',up.size()
         #crop1 = self.center_crop(bridge, up.size()[2])
-#         print 'bridge.size: ', bridge.size()
+#         #print 'bridge.size: ', bridge.size()
         crop1 = bridge
 #         crop1_dp = self.SpatialDroput(crop1)
         if self.spatial_dropout_rate>0:
             crop1 = self.dp(crop1)
         out = self.relu(torch.add(up, crop1))
-#         print 'line 161'
+#         #print 'line 161'
         out = self.conv(out)
-#         print 'line 161 is ', a.size()
+#         #print 'line 161 is ', a.size()
 #         out = self.relu(a)
 #         out = self.relu(self.conv2(out))
         out = self.conv2(out)
-#         print 'line 163 is ', out.size()
+#         #print 'line 163 is ', out.size()
         return out
 
 
@@ -482,16 +482,16 @@ class BaseResUpUnit(nn.Module):
 
     def forward(self, x, bridge):#bridge is the corresponding lower layer
         up = self.up(x)
-#         print 'line 158 ',up.size()
+#         #print 'line 158 ',up.size()
 #         crop1 = self.center_crop(bridge, up.size()[2])
         crop1 = bridge
         out = self.relu(torch.add(up, crop1))
-#         print 'line 161'
+#         #print 'line 161'
 #         a = self.conv(out)
-# #         print 'line 161 is ', a.size()
+# #         #print 'line 161 is ', a.size()
 #         out = self.relu(a)
 #         out = self.relu(self.conv2(out))
-#         print 'line 163 is ', out.size()
+#         #print 'line 163 is ', out.size()
         return out
 
 '''
@@ -611,7 +611,7 @@ class WeightedCrossEntropy3d(nn.Module):
         voxel_loss = self.nll_loss(logits, target) #NxWxHxD
         weighted_voxel_loss = weight_map*voxel_loss
         loss = torch.sum(weighted_voxel_loss)/(n*h*w*d)
-#         print 'cross-entropy-loss: ',type(loss)
+#         #print 'cross-entropy-loss: ',type(loss)
         return loss
 
 '''
@@ -653,7 +653,7 @@ class CrossEntropy3d(nn.Module):
         predict = predict.transpose(1, 2).transpose(2, 3).transpose(3, 4).contiguous() # n, h, w, d, c
         predict = predict[target_mask.view(n, h, w, d, 1).repeat(1, 1, 1, 1, c)].view(-1, c) #N*C
         loss = F.cross_entropy(predict, target, weight = self.weight, size_average = self.size_average)
-#         print 'cross-entropy-loss: ',type(loss)
+#         #print 'cross-entropy-loss: ',type(loss)
         return loss
 
 
@@ -695,7 +695,7 @@ class CrossEntropy2d(nn.Module):
         predict = predict.transpose(1, 2).transpose(2, 3).contiguous()
         predict = predict[target_mask.view(n, h, w, 1).repeat(1, 1, 1, c)].view(-1, c)
         loss = F.cross_entropy(predict, target, weight = self.weight, size_average = self.size_average)
-#         print 'cross-entropy-loss: ',type(loss)
+#         #print 'cross-entropy-loss: ',type(loss)
         return loss
 
 
@@ -819,14 +819,14 @@ def myDiceLoss4Organ(input,target):
     uniques=np.unique(target_one_hot.data.cpu().numpy())
     assert set(list(uniques))<=set([0,1]), "target must only contain zeros and ones"
 
-#     print 'line 330: size: ',target_one_hot.size()
+#     #print 'line 330: size: ',target_one_hot.size()
     
     probs = F.softmax(input,dim=1) #maybe it is not necessary
-#     print 'line 331: size: ',probs.size()
+#     #print 'line 331: size: ',probs.size()
     
     target = target_one_hot.contiguous().view(-1,1).squeeze(1)
     result = probs.contiguous().view(-1,1).squeeze(1)
-    #             print 'unique(target): ',unique(target),' unique(result): ',unique(result)
+    #             #print 'unique(target): ',unique(target),' unique(result): ',unique(result)
     
 #     intersect = torch.dot(result, target) #it doesn't support autograd
     
@@ -836,7 +836,7 @@ def myDiceLoss4Organ(input,target):
     target_sum = torch.sum(target)
     result_sum = torch.sum(result)
     union = result_sum + target_sum + (two*eps)
-#     print 'type of union: ',type(union)
+#     #print 'type of union: ',type(union)
 
     # the target volume can be empty - so we still want to
     # end up with a score of 1 if the result is 0/0
@@ -845,7 +845,7 @@ def myDiceLoss4Organ(input,target):
     dice_total = one - two*IoU
 
 #     dice_total = -1*torch.sum(dice_eso)/dice_eso.size(0)#divide by batch_sz
-#     print 'type of dice_total: ', type(dice_total)
+#     #print 'type of dice_total: ', type(dice_total)
     return dice_total
 
 
@@ -887,7 +887,7 @@ def myDiceLoss4Organs(inputs, targets):
     targets_one_hot = Variable(torch.cuda.FloatTensor(inputSZ).zero_()) #NxCxHxW
 #     targets_one_hot = targets_one_hot.permute(0,2,3,1) #NxHxWxC
     targets_one_hot.scatter_(1, target1, 1) #scatter along the 'numOfDims' dimension
-#     print 'line 367: one_hot size: ',targets_one_hot.size()
+#     #print 'line 367: one_hot size: ',targets_one_hot.size()
     
     
     ###### Now the prediction and target has become one-hot format
@@ -903,15 +903,15 @@ def myDiceLoss4Organs(inputs, targets):
 #         result = results_one_hot[:,organID,:,:].contiguous().view(-1,1).squeeze(1)
         target = targets_one_hot[:,organID,...].contiguous().view(-1,1).squeeze(1) #can be used as 2D/3D
         result = results_one_hot[:,organID,...].contiguous().view(-1,1).squeeze(1) #can be used as 2D/3D
-#             print 'unique(target): ',unique(target),' unique(result): ',unique(result)
+#             #print 'unique(target): ',unique(target),' unique(result): ',unique(result)
         
 #         intersect = torch.dot(result, target)
         intersect_vec = result * target
         intersect = torch.sum(intersect_vec)
-#         print type(intersect)
+#         #print type(intersect)
         # binary values so sum the same as sum of squares
         result_sum = torch.sum(result)
-#         print type(result_sum)
+#         #print type(result_sum)
         target_sum = torch.sum(target)
         union = result_sum + target_sum + (two*eps)
 
@@ -928,7 +928,7 @@ def myDiceLoss4Organs(inputs, targets):
     denominator = Variable(torch.cuda.FloatTensor(1).fill_(numOfCategories))
     
     out = out / denominator
-#     print type(out)
+#     #print type(out)
     return out
 
 
@@ -1063,15 +1063,15 @@ class myWeightedDiceLoss4Organs(nn.Module):
 #             result = results_one_hot[:,organID,:,:].contiguous().view(-1,1).squeeze(1)
             target = targets_one_hot[:,organID,...].contiguous().view(-1,1).squeeze(1) #for 2D or 3D
             result = results_one_hot[:,organID,...].contiguous().view(-1,1).squeeze(1) #for 2D or 3D
-    #             print 'unique(target): ',unique(target),' unique(result): ',unique(result)
+    #             #print 'unique(target): ',unique(target),' unique(result): ',unique(result)
             
     #         intersect = torch.dot(result, target)
             intersect_vec = result * target
             intersect = torch.sum(intersect_vec)
-    #         print type(intersect)
+    #         #print type(intersect)
             # binary values so sum the same as sum of squares
             result_sum = torch.sum(result)
-    #         print type(result_sum)
+    #         #print type(result_sum)
             target_sum = torch.sum(target)
             union = result_sum + target_sum + (two*eps)
     
@@ -1087,7 +1087,7 @@ class myWeightedDiceLoss4Organs(nn.Module):
 #         denominator = Variable(torch.cuda.FloatTensor(1).fill_(numOfCategories))
         
         out = out / denominator
-    #     print type(out)
+    #     #print type(out)
         return out        
 
 
@@ -1156,19 +1156,19 @@ class GeneralizedDiceLoss4Organs(nn.Module):
 
             target = targets_one_hot[:,organID,...].contiguous().view(-1,1).squeeze(1) #for 2D or 3D
             result = results_one_hot[:,organID,...].contiguous().view(-1,1).squeeze(1) #for 2D or 3D
-    #             print 'unique(target): ',unique(target),' unique(result): ',unique(result)
+    #             #print 'unique(target): ',unique(target),' unique(result): ',unique(result)
             if torch.sum(target).cpu().data[0] == 0:
                 organWeight = Variable(torch.cuda.FloatTensor(1).fill_(0.0)) # this is necessary, otherwise, union can be too big due to too big organ weight if some organ doesnot appear
             else:
                organWeight = 1/((torch.sum(target))**2+eps) 
-#             print 'sum: %d'%torch.sum(target),' organWeight: %f'%organWeight
+#             #print 'sum: %d'%torch.sum(target),' organWeight: %f'%organWeight
     #         intersect = torch.dot(result, target)
             intersect_vec = result * target
             intersect = intersect + organWeight*torch.sum(intersect_vec)
-    #         print type(intersect)
+    #         #print type(intersect)
             # binary values so sum the same as sum of squares
             result_sum = torch.sum(result)
-    #         print type(result_sum)
+    #         #print type(result_sum)
             target_sum = torch.sum(target)
             union = union + organWeight*(result_sum + target_sum) + (two*eps)
     
@@ -1179,7 +1179,7 @@ class GeneralizedDiceLoss4Organs(nn.Module):
 #             out = torch.add(out, IoU.data*2)
         out =  one - two*IoU
 
-    #     print type(out)
+    #     #print type(out)
         return out        
 
     
@@ -1211,13 +1211,13 @@ class WeightedDiceLoss4Organs(Function):
         
         inputSZ = inputs.size() #it should be sth like NxCxHxW
         
-#         print 'line 336: inputs size: ',inputSZ
-#         print 'line 337: input: ', inputs[1,1,1,1]
+#         #print 'line 336: inputs size: ',inputSZ
+#         #print 'line 337: input: ', inputs[1,1,1,1]
         
         _, results_ = inputs.max(1)
-#         print 'line 339: results_ size: ',results_.size()
+#         #print 'line 339: results_ size: ',results_.size()
         results_ = torch.squeeze(results_) #NxHxW
-#         print 'line 338: unique(results): ',unique(results_)
+#         #print 'line 338: unique(results): ',unique(results_)
         self.inputs = torch.cuda.FloatTensor(inputs.size())
         self.inputs.copy_(inputs)
         
@@ -1244,13 +1244,13 @@ class WeightedDiceLoss4Organs(Function):
         self.results_one_hot = torch.cuda.FloatTensor(inputSZ).zero_() #NxCxHxW
         self.results_one_hot = self.results_one_hot.permute(0,2,3,1) #NxHxWxC
         self.results_one_hot.scatter_(numOfDims,result1,1) #scatter along the 'numOfDims' dimension
-#         print 'line 361: one_hot size: ',self.results_one_hot.size()
+#         #print 'line 361: one_hot size: ',self.results_one_hot.size()
         
         target1 = torch.unsqueeze(targets,numOfDims) #NxHxWx1
         self.targets_one_hot = torch.cuda.FloatTensor(inputSZ).zero_() #NxCxHxW
         self.targets_one_hot = self.targets_one_hot.permute(0,2,3,1) #NxHxWxC
         self.targets_one_hot.scatter_(numOfDims,target1,1) #scatter along the 'numOfDims' dimension
-#         print 'line 367: one_hot size: ',self.targets_one_hot.size()
+#         #print 'line 367: one_hot size: ',self.targets_one_hot.size()
         
         
         ###### Now the prediction and target has become one-hot format
@@ -1262,7 +1262,7 @@ class WeightedDiceLoss4Organs(Function):
         for organID in range(0, self.numOfCategories):
             target = self.targets_one_hot[...,organID].contiguous().view(-1,1).squeeze(1)
             result = self.results_one_hot[...,organID].contiguous().view(-1,1).squeeze(1)
-#             print 'unique(target): ',unique(target),' unique(result): ',unique(result)
+#             #print 'unique(target): ',unique(target),' unique(result): ',unique(result)
             
             intersect = torch.dot(result, target)
             # binary values so sum the same as sum of squares
@@ -1287,7 +1287,7 @@ class WeightedDiceLoss4Organs(Function):
  
         targets = self.targets_one_hot # we need binary for targets
         intersects, unions = self.intersect, self.union
-#         print 'targets size: ',targets.size(),'unions size: ',unions.size(),'intersects size: ',intersects.size()
+#         #print 'targets size: ',targets.size(),'unions size: ',unions.size(),'intersects size: ',intersects.size()
         for i in range(0,self.numOfCategories):
             input = inputs[:,i,...]
             target = targets[...,i]
@@ -1295,14 +1295,14 @@ class WeightedDiceLoss4Organs(Function):
             intersect = intersects[i]
             gt = torch.div(target, union)
             IoU2 = intersect/(union*union)
-            print 'line 419: IoU2: ',IoU2
+            #print 'line 419: IoU2: ',IoU2
 
 #             pred = torch.mul(input[:, 1], IoU2) #input[:,1] is equal to input[:,1,...]
             pred = torch.mul(input, IoU2) #input[:,1] is equal to input[:,1,...]
-            print 'line 423: input: ',input.cpu()[1,1,1,...]
-            print 'line 423: pred: ',pred.cpu()[1,1,1,...]
-#             print 'gt size: ',gt.size(),' pred size: ',pred.size()
-            print 'line 423: gt: ', gt.cpu()[1,1,1]
+            #print 'line 423: input: ',input.cpu()[1,1,1,...]
+            #print 'line 423: pred: ',pred.cpu()[1,1,1,...]
+#             #print 'gt size: ',gt.size(),' pred size: ',pred.size()
+            #print 'line 423: gt: ', gt.cpu()[1,1,1]
             dDice = torch.add(torch.mul(gt, 2), torch.mul(pred, -4))
             if i==0:
                 prev = torch.mul(dDice, grad_output[0])
@@ -1310,8 +1310,8 @@ class WeightedDiceLoss4Organs(Function):
                 curr = torch.mul(dDice, -grad_output[0])
                 grad_input = torch.cat((prev,curr), 0)
                 prev = curr
-        print 'line 429: grad_output: ',grad_output.cpu()        
-        print 'line 430: grad_input: ', grad_input.cpu()[1,1,1,...]
+        #print 'line 429: grad_output: ',grad_output.cpu()        
+        #print 'line 430: grad_input: ', grad_input.cpu()[1,1,1,...]
         return grad_input , None
 
 
@@ -1430,12 +1430,12 @@ class DiceLoss4Organs(Function):
 
         sz =targets.size()
         singleSZ = targets[0,...].size()
-#         print type(sz),singleSZ
+#         #print type(sz),singleSZ
         diceLoss = 0.0
         loss = np.zeros(sz[0])
-#         print '..... target size: ',targets.size()
-#         print '..... results size: ',results.size()
-#         print type(inputs)
+#         #print '..... target size: ',targets.size()
+#         #print '..... results size: ',results.size()
+#         #print type(inputs)
         for k in range(0,sz[0]):
             result_ = torch.FloatTensor(singleSZ)
             target_ = torch.FloatTensor(singleSZ)
@@ -1458,17 +1458,17 @@ class DiceLoss4Organs(Function):
     #             tflat = target.view(-1)
                 intersect = torch.dot(result,target) #no need to flatern input or target
                 intersect = np.max([eps, intersect]) #scalar value
-    #             print '......intersect is: ', intersect
+    #             #print '......intersect is: ', intersect
                 input_sum = torch.sum(result)
                 target_sum = torch.sum(target)
                 union = input_sum + target_sum + 2*eps #not the real union
-    #             print '.......union is: ', union
-    #             print '..........dice is: ', 1.0*self.organWeights[ind]/totalWeight * (2.0 * intersect / union)
+    #             #print '.......union is: ', union
+    #             #print '..........dice is: ', 1.0*self.organWeights[ind]/totalWeight * (2.0 * intersect / union)
                 loss[k] += 1.0 * self.organWeights[ind]/totalWeight*(1.0 - (2.0 * intersect / union))
             
 #         loss = loss/len(self.organIDs)
-#         print type(loss)
-#         print 'loss shape: ', loss.shape,' loss is ',loss
+#         #print type(loss)
+#         #print 'loss shape: ', loss.shape,' loss is ',loss
         if self.size_average:
             diceLoss = loss.mean()
         else:
@@ -1476,7 +1476,7 @@ class DiceLoss4Organs(Function):
 
         diceLoss = torch.cuda.FloatTensor(1).fill_(1*diceLoss)
         diceLoss = Variable(diceLoss,requires_grad=True)
-#         print 'haha2',type(loss)
+#         #print 'haha2',type(loss)
         
         return diceLoss
     
@@ -1552,7 +1552,7 @@ def Wasserstein_Distance(D_real, D_fake):
 calculate gradient penalty for wgan
 '''
 def calc_gradient_penalty(netD, real_data, fake_data):
-    #print real_data.size()
+    ##print real_data.size()
     batch_size = real_data.shape[0]
     alpha = torch.randn(batch_size, 1,1,1)
     alpha = alpha.expand(real_data.size())
@@ -1636,7 +1636,7 @@ class FeatureExtractor(nn.Module):
 def adjust_learning_rate(optimizer, lr):
 #     lr = opt.lr * (0.1 ** (epoch // opt.step))
     for param_group in optimizer.param_groups:
-        print "current lr is ", param_group["lr"]
+        #print "current lr is ", param_group["lr"]
         if param_group["lr"] > lr:
             param_group["lr"] = lr
 

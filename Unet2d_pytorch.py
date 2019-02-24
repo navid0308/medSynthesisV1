@@ -18,10 +18,10 @@ class UNetConvBlock(nn.Module):
         self.activation = activation
 
 
-        init.xavier_uniform(self.conv.weight, gain = np.sqrt(2.0))
-        init.constant(self.conv.bias,0)
-        init.xavier_uniform(self.conv2.weight, gain = np.sqrt(2.0))
-        init.constant(self.conv2.bias,0)
+        init.xavier_uniform_(self.conv.weight, gain = np.sqrt(2.0))
+        init.constant_(self.conv.bias,0)
+        init.xavier_uniform_(self.conv2.weight, gain = np.sqrt(2.0))
+        init.constant_(self.conv2.bias,0)
     def forward(self, x):
         out = self.activation(self.bn(self.conv(x)))
         out = self.activation(self.bn2(self.conv2(out)))
@@ -36,11 +36,11 @@ class residualUnit(nn.Module):
     def __init__(self, in_size, out_size, kernel_size=3,stride=1, padding=1, activation=F.relu):
         super(residualUnit, self).__init__()
         self.conv1 = nn.Conv2d(in_size, out_size, kernel_size, stride=1, padding=1)
-        init.xavier_uniform(self.conv1.weight, gain = np.sqrt(2.0)) #or gain=1
-        init.constant(self.conv1.bias, 0)
+        init.xavier_uniform_(self.conv1.weight, gain = np.sqrt(2.0)) #or gain=1
+        init.constant_(self.conv1.bias, 0)
         self.conv2 = nn.Conv2d(out_size, out_size, kernel_size, stride=1, padding=1)
-        init.xavier_uniform(self.conv2.weight, gain = np.sqrt(2.0)) #or gain=1
-        init.constant(self.conv2.bias, 0)
+        init.xavier_uniform_(self.conv2.weight, gain = np.sqrt(2.0)) #or gain=1
+        init.constant_(self.conv2.bias, 0)
         self.activation = activation
         self.bn1 = nn.BatchNorm2d(out_size)
         self.bn2 = nn.BatchNorm2d(out_size)
@@ -73,12 +73,12 @@ class UNetUpBlock(nn.Module):
         self.conv2 = nn.Conv2d(out_size, out_size, kernel_size, stride=1, padding=1)
         self.bn2 = nn.BatchNorm2d(out_size)
         self.activation = activation
-        init.xavier_uniform(self.up.weight, gain = np.sqrt(2.0))
-        init.constant(self.up.bias,0)
-        init.xavier_uniform(self.conv.weight, gain = np.sqrt(2.0))
-        init.constant(self.conv.bias,0)
-        init.xavier_uniform(self.conv2.weight, gain = np.sqrt(2.0))
-        init.constant(self.conv2.bias,0)
+        init.xavier_uniform_(self.up.weight, gain = np.sqrt(2.0))
+        init.constant_(self.up.bias,0)
+        init.xavier_uniform_(self.conv.weight, gain = np.sqrt(2.0))
+        init.constant_(self.conv.bias,0)
+        init.xavier_uniform_(self.conv2.weight, gain = np.sqrt(2.0))
+        init.constant_(self.conv2.bias,0)
 
     def center_crop(self, layer, target_size):
         batch_size, n_channels, layer_width, layer_height = layer.size()
@@ -107,8 +107,8 @@ class UNetUpResBlock(nn.Module):
         self.up = nn.ConvTranspose2d(in_size, out_size, 2, stride=2)
         self.bnup = nn.BatchNorm2d(out_size)
 
-        init.xavier_uniform(self.up.weight, gain = np.sqrt(2.0))
-        init.constant(self.up.bias,0)
+        init.xavier_uniform_(self.up.weight, gain = np.sqrt(2.0))
+        init.constant_(self.up.bias,0)
 
         self.activation = activation
 

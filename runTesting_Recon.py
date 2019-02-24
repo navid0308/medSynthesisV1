@@ -1,4 +1,4 @@
-# from __future__ import print_function
+# from __future__ import #print_function
 import argparse, os
 import torch.nn as nn
 import torch.nn.functional as F
@@ -45,7 +45,7 @@ parser.add_argument("--resType", type=int, default=2, help="resType: 0: segmenta
 
 def main():
     opt = parser.parse_args()
-    print opt
+    #print opt
 
     path_test = '/home/niedong/Data4LowDosePET/data_niigz_scale/'
 
@@ -94,22 +94,22 @@ def main():
         # for training data in pelvicSeg
         if opt.how2normalize == 1:
             maxV, minV = np.percentile(mrnp, [99, 1])
-            print 'maxV,', maxV, ' minV, ', minV
+            #print 'maxV,', maxV, ' minV, ', minV
             mrnp = (mrnp - mu) / (maxV - minV)
-            print 'unique value: ', np.unique(ctnp)
+            #print 'unique value: ', np.unique(ctnp)
 
         # for training data in pelvicSeg
         if opt.how2normalize == 2:
             maxV, minV = np.percentile(mrnp, [99, 1])
-            print 'maxV,', maxV, ' minV, ', minV
+            #print 'maxV,', maxV, ' minV, ', minV
             mrnp = (mrnp - mu) / (maxV - minV)
-            print 'unique value: ', np.unique(ctnp)
+            #print 'unique value: ', np.unique(ctnp)
 
         # for training data in pelvicSegRegH5
         if opt.how2normalize == 3:
             std = np.std(mrnp)
             mrnp = (mrnp - mu) / std
-            print 'maxV,', np.ndarray.max(mrnp), ' minV, ', np.ndarray.min(mrnp)
+            #print 'maxV,', np.ndarray.max(mrnp), ' minV, ', np.ndarray.min(mrnp)
 
         if opt.how2normalize == 4:
             maxLPET = 149.366742
@@ -145,7 +145,7 @@ def main():
             meanCT = -601.1929
             stdCT = 475.034
 
-            print 'ct, max: ', np.amax(ctnp), ' ct, min: ', np.amin(ctnp)
+            #print 'ct, max: ', np.amax(ctnp), ' ct, min: ', np.amin(ctnp)
 
             # matLPET = (mrnp - meanLPET) / (stdLPET)
             matLPET = mrnp
@@ -155,7 +155,7 @@ def main():
         if opt.how2normalize == 6:
             maxPercentPET, minPercentPET = np.percentile(mrnp, [99.5, 0])
             maxPercentCT, minPercentCT = np.percentile(ctnp, [99.5, 0])
-            print 'maxPercentPET: ', maxPercentPET, ' minPercentPET: ', minPercentPET, ' maxPercentCT: ', maxPercentCT, 'minPercentCT: ', minPercentCT
+            #print 'maxPercentPET: ', maxPercentPET, ' minPercentPET: ', minPercentPET, ' maxPercentCT: ', maxPercentCT, 'minPercentCT: ', minPercentCT
 
             matLPET = (mrnp - minPercentPET) / (maxPercentPET - minPercentPET)
             matSPET = (hpetnp - minPercentPET) / (maxPercentPET - minPercentPET)
@@ -166,9 +166,9 @@ def main():
             matFA = matLPET
             matGT = hpetnp
 
-            print 'matFA shape: ', matFA.shape, ' matGT shape: ', matGT.shape
+            #print 'matFA shape: ', matFA.shape, ' matGT shape: ', matGT.shape
             matOut = testOneSubject_aver_res(matFA, matGT, [5, 64, 64], [1, 64, 64], [1, 16, 16], netG, opt.modelPath)
-            print 'matOut shape: ', matOut.shape
+            #print 'matOut shape: ', matOut.shape
             if opt.how2normalize == 6:
                 ct_estimated = matOut * (maxPercentPET - minPercentPET) + minPercentPET
             else:
@@ -176,9 +176,9 @@ def main():
             ct_estimated[np.where(mrnp==0)] = 0
             itspsnr = psnr(ct_estimated, matGT)
 
-            print 'pred: ', ct_estimated.dtype, ' shape: ', ct_estimated.shape
-            print 'gt: ', ctnp.dtype, ' shape: ', ct_estimated.shape
-            print 'psnr = ', itspsnr
+            #print 'pred: ', ct_estimated.dtype, ' shape: ', ct_estimated.shape
+            #print 'gt: ', ctnp.dtype, ' shape: ', ct_estimated.shape
+            #print 'psnr = ', itspsnr
             volout = sitk.GetImageFromArray(ct_estimated)
             volout.SetSpacing(spacing)
             volout.SetOrigin(origin)
@@ -187,9 +187,9 @@ def main():
         else:
             matFA = matLPET
             matGT = hpetnp
-            print 'matFA shape: ', matFA.shape, ' matGT shape: ', matGT.shape
+            #print 'matFA shape: ', matFA.shape, ' matGT shape: ', matGT.shape
             matOut = testOneSubject_aver_res_multiModal(matFA, matCT, matGT, [5, 64, 64], [1, 64, 64], [1, 16, 16], netG, opt.modelPath)
-            print 'matOut shape: ', matOut.shape
+            #print 'matOut shape: ', matOut.shape
             if opt.how2normalize == 6:
                 ct_estimated = matOut * (maxPercentPET - minPercentPET) + minPercentPET
             else:
@@ -198,9 +198,9 @@ def main():
             ct_estimated[np.where(mrnp==0)] = 0
             itspsnr = psnr(ct_estimated, matGT)
 
-            print 'pred: ', ct_estimated.dtype, ' shape: ', ct_estimated.shape
-            print 'gt: ', ctnp.dtype, ' shape: ', ct_estimated.shape
-            print 'psnr = ', itspsnr
+            #print 'pred: ', ct_estimated.dtype, ' shape: ', ct_estimated.shape
+            #print 'gt: ', ctnp.dtype, ' shape: ', ct_estimated.shape
+            #print 'psnr = ', itspsnr
             volout = sitk.GetImageFromArray(ct_estimated)
             volout.SetSpacing(spacing)
             volout.SetOrigin(origin)

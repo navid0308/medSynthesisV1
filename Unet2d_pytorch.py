@@ -22,7 +22,7 @@ class UNetConvBlock(nn.Module):
         init.constant_(self.conv.bias,0)
         init.xavier_uniform_(self.conv2.weight, gain = np.sqrt(2.0))
         init.constant_(self.conv2.bias,0)
-    def forward(self, x):
+    def forward(self, x, ignore=None):
         out = self.activation(self.bn(self.conv(x)))
         out = self.activation(self.bn2(self.conv2(out)))
 
@@ -50,7 +50,7 @@ class residualUnit(nn.Module):
             self.convX = nn.Conv2d(in_size, out_size, kernel_size=1, stride=1, padding=0)
             self.bnX = nn.BatchNorm2d(out_size)
 
-    def forward(self, x):
+    def forward(self, x, ignore=None):
         out1 = self.activation(self.bn1(self.conv1(x)))
         out2 = self.activation(self.bn1(self.conv2(out1)))
         if self.in_size!=self.out_size:
@@ -159,7 +159,7 @@ class UNet(nn.Module):
         self.last = nn.Conv2d(64, n_classes, 1, stride=1)
 
 
-    def forward(self, x):
+    def forward(self, x, ignore=None):
 #         print 'line 70 ',x.size()
         block1 = self.conv_block1_64(x)
         pool1 = self.pool1(block1)
@@ -216,7 +216,7 @@ class ResUNet(nn.Module):
 
         self.last = nn.Conv2d(64, n_classes, 1, stride=1)
 
-    def forward(self, x):
+    def forward(self, x, ignore=None):
         #         print 'line 70 ',x.size()
         block1 = self.conv_block1_64(x)
         pool1 = self.pool1(block1)
@@ -297,12 +297,12 @@ class UNet_LRes(nn.Module):
         up4 = self.up_block128_64(up3, block1)
         
         last = self.last(up4)
-        #print 'res_x.shape is ',res_x.shape,' and last.shape is ',last.shape
+        #print('res_x.shape is ',res_x.shape,' and last.shape is ',last.shape)
         if len(res_x.shape)==3:
             res_x = res_x.unsqueeze(1) 
         out = torch.add(last,res_x)
         
-        #print 'out.shape is ',out.shape
+        #print('out.shape is ',out.shape)
         return out
 
 

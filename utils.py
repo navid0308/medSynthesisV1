@@ -18,9 +18,8 @@ def Generator_2D_slices(path_patients,batchsize,inputKey='T1',outputKey='T2'):
     print(path_patients)
     patients = os.listdir(path_patients)#every file  is a hdf5 patient
     while True:
-        
         for idx,namepatient in enumerate(patients):
-            print(namepatient)            
+            #print('here', namepatient)            
             f=h5py.File(os.path.join(path_patients,namepatient),'r')
             #dataMRptr=f['dataMR']
             dataMRptr=f[inputKey]
@@ -33,8 +32,8 @@ def Generator_2D_slices(path_patients,batchsize,inputKey='T1',outputKey='T2'):
             dataMR=np.squeeze(dataMR)
             dataCT=np.squeeze(dataCT)
 
-            #print('mr shape h5 ',dataMR.shape#B,H,W,C
-            #print('ct shape h5 ',dataCT.shape#B,H,W
+            #print('t1 shape h5 ',dataMR.shape)#B,H,W,C
+            #print('t2 shape h5 ',dataCT.shape)#B,H,W
             
             shapedata=dataMR.shape
             #Shuffle data
@@ -58,18 +57,19 @@ def Generator_2D_slices(path_patients,batchsize,inputKey='T1',outputKey='T2'):
                 X=np.copy(dataMR)                
                 y=np.copy(dataCT)
 
-            #X = np.expand_dims(X, axis=3)    
+            #X = np.expand_dims(X, axis=3)
             X=X.astype(np.float32)
-            y=np.expand_dims(y, axis=3)#B,H,W,C
+            #y=np.expand_dims(y, axis=1)#B,H,W,C
             y=y.astype(np.float32)
             #y[np.where(y==5)]=0
-            
+
             #shuffle the data, by dong
             inds = np.arange(X.shape[0])
             np.random.shuffle(inds)
             X=X[inds,...]
             y=y[inds,...]
-            
+
+            print('x shape ', X.shape)
             print('y shape ', y.shape)                   
             for i_batch in range(int(X.shape[0]/batchsize)):
                 yield (X[i_batch*batchsize:(i_batch+1)*batchsize,...],  y[i_batch*batchsize:(i_batch+1)*batchsize,...])
@@ -594,7 +594,7 @@ def evaluate_res(patch_MR, netG, modelPath, nd=2):
 
     shape = patch_MR.shape
     chn = shape[1]
-    #print('channel is ',chn
+    #print('channel is ',chn)
     if nd!=2:
         patch_MR = patch_MR.unsqueeze(0)
         res_MR = patch_MR

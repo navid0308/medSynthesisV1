@@ -21,10 +21,10 @@ parser = argparse.ArgumentParser(description="PyTorch InfantSeg")
 
 parser.add_argument("--isSegReg", action="store_true", help="is Seg and Reg?", default=False)
 parser.add_argument("--isMultiSource", action="store_true", help="is multiple input modality used?", default=False)
-parser.add_argument("--whichLoss", type=int, default=1, help="which loss to use: 1. LossL1, 2. lossRTL1, 3. MSE (default)")
+parser.add_argument("--whichLoss", type=int, default=3, help="which loss to use: 1. LossL1, 2. lossRTL1, 3. MSE (default)")
 parser.add_argument("--whichNet", type=int, default=4, help="which loss to use: 1. UNet, 2. ResUNet, 3. UNet_LRes and 4. ResUNet_LRes (default, 3)")
 parser.add_argument("--lossBase", type=int, default=1, help="The base to multiply the lossG_G, Default (1)")
-parser.add_argument("--batchSize", type=int, default=32, help="training batch size")
+parser.add_argument("--batchSize", type=int, default=10, help="training batch size")
 parser.add_argument("--numOfChannel_singleSource", type=int, default=5, help="# of channels for a 2D patch for the main modality (Default, 5)")
 parser.add_argument("--numOfChannel_allSource", type=int, default=5, help="# of channels for a 2D patch for all the concatenated modalities (Default, 5)")
 parser.add_argument("--isResidualEnhancement", action="store_true", help="is residual learning operation enhanced?", default=False)
@@ -38,16 +38,18 @@ parser.add_argument("--lambdaAD", type=float, default=0, help="loss coefficient 
 parser.add_argument("--adImportance", type=float, default=0, help="Sample importance from AD network. Default=0")
 parser.add_argument("--isFixedRegions", action="store_true", help="Is the organ regions roughly known?", default=False)
 #parser.add_argument("--modelPath", default="/home/niedong/Data4LowDosePET/pytorch_UNet/model/resunet2d_pet_Aug_noNorm_lres_bn_lr5e3_base1_lossL1_0p01_0624_200000.pt", type=str, help="prefix of the to-be-saved model name")
-parser.add_argument("--modelPath", default="/home/niedong/Data4LowDosePET/pytorch_UNet/model/resunet2d_dp_pet_BatchAug_sNorm_lres_bn_lr5e3_lrdec_base1_lossL1_0p005_0628_200000.pt", type=str, help="prefix of the to-be-saved model name")
-parser.add_argument("--prefixPredictedFN", default="pred_resunet2d_dp_pet_Aug_sNorm_lres_lrdce_bn_lr5e3_base1_lossL1_0628_20w_", type=str, help="prefix of the to-be-saved predicted filename")
+parser.add_argument("--modelPath", default="C:/Users/NAVID/OneDrive - The Pennsylvania State University/PSU/Research/Almekkawy Lab/Code/medSynthesisV1/T1T2-MN144000.pt", type=str, help="prefix of the to-be-saved model name")
+parser.add_argument("--prefixPredictedFN", default="T1T2FN", type=str, help="prefix of the to-be-saved predicted filename")
 parser.add_argument("--how2normalize", type=int, default=6, help="how to normalize the data")
 parser.add_argument("--resType", type=int, default=2, help="resType: 0: segmentation map (integer); 1: regression map (continuous); 2: segmentation map + probability map")
+
+from reslice import resize_3d
 
 def main():
     opt = parser.parse_args()
     #print opt
 
-    path_test = '/home/niedong/Data4LowDosePET/data_niigz_scale/'
+    path_test = 'C:/Users/NAVID/OneDrive - The Pennsylvania State University/PSU/Research/Almekkawy Lab/Code/medSynthesisV1/test'
 
     if opt.whichNet==1:
         netG = UNet(in_channel=opt.numOfChannel_allSource, n_classes=1)
@@ -65,25 +67,29 @@ def main():
     netG.load_state_dict(checkpoint['model'])
 
 
-    ids = [1,6,11,16,21,26,31,36,41,46] #in on folder, we test 10 which is the testing set
+    #ids = [1,6,11,16,21,26,31,36,41,46] #in on folder, we test 10 which is the testing set
     ids = [1] #in on folder, we test 10 which is the testing set
 
-    ids = ['1_QFZ','2_LLQ','3_LMB','4_ZSL','5_CJB','11_TCL','15_WYL','21_PY','25_LYL','31_CZX','35_WLL','41_WQC','45_YXM']
+    #ids = ['1_QFZ','2_LLQ','3_LMB','4_ZSL','5_CJB','11_TCL','15_WYL','21_PY','25_LYL','31_CZX','35_WLL','41_WQC','45_YXM']
+
     for ind in ids:
         start = time.time()
 
-        mr_test_itk = sitk.ReadImage(os.path.join(path_test,'%s_60s_suv.nii.gz'%ind))#input modality
-        ct_test_itk = sitk.ReadImage(os.path.join(path_test,'%s_rsCT.nii.gz'%ind))#auxialliary modality
-        hpet_test_itk = sitk.ReadImage(os.path.join(path_test, '%s_120s_suv.nii.gz'%ind))#output modality
+        mr_test_itk = sitk.ReadImage(os.path.join(path_test,'IXI450-Guys-1093-T1.nii.gz'))#input modality
+        ct_test_itk = sitk.ReadImage(os.path.join(path_test,'IXI450-Guys-1093-T1.nii.gz'))#auxialliary modality
+        hpet_test_itk = sitk.ReadImage(os.path.join(path_test, 'IXI450-Guys-1093-T2.nii.gz'))#output modality
 
 
         spacing = hpet_test_itk.GetSpacing()
         origin = hpet_test_itk.GetOrigin()
         direction = hpet_test_itk.GetDirection()
 
-        mrnp = sitk.GetArrayFromImage(mr_test_itk)
-        ctnp = sitk.GetArrayFromImage(ct_test_itk)
-        hpetnp = sitk.GetArrayFromImage(hpet_test_itk)
+        mrnp=sitk.GetArrayFromImage(mr_test_itk)
+        mrnp = resize_3d(mrnp)
+        ctnp=sitk.GetArrayFromImage(ct_test_itk)
+        ctnp = resize_3d(ctnp)
+        hpetnp=sitk.GetArrayFromImage(hpet_test_itk)
+        hpetnp = resize_3d(hpetnp)
 
         ##### specific normalization #####
         # mu = np.mean(mrnp)
@@ -167,7 +173,7 @@ def main():
             matGT = hpetnp
 
             #print 'matFA shape: ', matFA.shape, ' matGT shape: ', matGT.shape
-            matOut = testOneSubject_aver_res(matFA, matGT, [5, 64, 64], [1, 64, 64], [1, 16, 16], netG, opt.modelPath)
+            matOut = testOneSubject_aver_res(matFA, matGT, [5, 64, 64], [1, 64, 64], [1, 32, 32], netG, opt.modelPath)
             #print 'matOut shape: ', matOut.shape
             if opt.how2normalize == 6:
                 ct_estimated = matOut * (maxPercentPET - minPercentPET) + minPercentPET
@@ -206,7 +212,7 @@ def main():
             volout.SetOrigin(origin)
             volout.SetDirection(direction)
             sitk.WriteImage(volout, opt.prefixPredictedFN + '{}'.format(ind) + '.nii.gz')
-
+        break
 if __name__ == '__main__':
 #     testGradients()
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
